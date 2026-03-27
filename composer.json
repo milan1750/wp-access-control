@@ -1,0 +1,22 @@
+{
+	"name": "milan1750/wp-platform-access-control",
+	"description": "Easily allows to create access control.",
+	"type": "wordpress-plugin",
+	"autoload": {
+		"psr-4": {
+			"WPAC\\": "includes/"
+		}
+	},
+	"require-dev": {
+		"squizlabs/php_codesniffer": "^3.13.5",
+		"wp-coding-standards/wpcs": "^3.3.0"
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	},
+	"require": {
+		"phpoffice/phpspreadsheet": "^5.4"
+	}
+}
