@@ -50,12 +50,15 @@ if ( is_readable( $autoloader ) ) {
 }
 
 use WPAC\Plugin;
+use WPAC\Core\Router;
 
 /**
  * Plugin activation hook.
  */
 function wpac_activate(): void {
 	Plugin::activate();
+	Router::register_routes();  // Make sure Router is initialized.
+	flush_rewrite_rules();
 }
 
 /**
@@ -63,10 +66,12 @@ function wpac_activate(): void {
  */
 function wpac_deactivate(): void {
 	Plugin::deactivate();
+	flush_rewrite_rules();
 }
 
 register_activation_hook( __FILE__, 'wpac_activate' );
 register_deactivation_hook( __FILE__, 'wpac_deactivate' );
+
 
 /**
  * Initialize plugin.
@@ -74,13 +79,24 @@ register_deactivation_hook( __FILE__, 'wpac_deactivate' );
 add_action(
 	'plugins_loaded',
 	function () {
-
 		// Initialize core plugin.
 		Plugin::init();
-
-		// Global instance for ecosystem usage.
-		$GLOBALS['wpac'] = Plugin::instance();
-
 		do_action( 'wpac_plugin_loaded' );
 	}
 );
+
+
+/**
+ * Main instance of WPAC.
+ *
+ * Returns the main instance of WPAC to prevent the need to use globals.
+ *
+ * @since  1.0.0
+ * @return WPAC
+ */
+function wpac() {
+	return Plugin::instance();
+}
+
+// Global for backwards compatibility.
+$GLOBALS['wpac'] = wpac();

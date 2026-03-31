@@ -44,90 +44,90 @@ class Activator {
 
 		// ENTITIES table.
 		$sql[] = "CREATE TABLE {$entities} (
-        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-        name VARCHAR(255) NOT NULL,
-        slug VARCHAR(255) NOT NULL,
-        status TINYINT(1) DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        UNIQUE KEY slug (slug),
-        KEY status (status)
-    ) {$charset_collate};";
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			name VARCHAR(255) NOT NULL,
+			slug VARCHAR(255) NOT NULL,
+			status TINYINT(1) DEFAULT 1,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY slug (slug),
+			KEY status (status)
+		) {$charset_collate};";
 
 		// SITES table.
 		$sql[] = "CREATE TABLE {$sites} (
-        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-        entity_id BIGINT UNSIGNED NOT NULL,
-        site_id VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        slug VARCHAR(255) NOT NULL,
-        location VARCHAR(255) NULL,
-        status TINYINT(1) DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        UNIQUE KEY slug (slug),
-        KEY entity_id (entity_id),
-        KEY status (status)
-    ) {$charset_collate};";
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			entity_id BIGINT UNSIGNED NOT NULL,
+			site_id VARCHAR(255) NOT NULL,
+			name VARCHAR(255) NOT NULL,
+			slug VARCHAR(255) NOT NULL,
+			location VARCHAR(255) NULL,
+			status TINYINT(1) DEFAULT 1,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY slug (slug),
+			KEY entity_id (entity_id),
+			KEY status (status)
+		) {$charset_collate};";
 
 		$sql[] = "CREATE TABLE {$user_cap} (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    user_id BIGINT UNSIGNED NOT NULL,
-    role VARCHAR(100) NOT NULL,
-    scope VARCHAR(100) NOT NULL DEFAULT 'global',
-    capabilities LONGTEXT NULL,
-    meta LONGTEXT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY user_id (user_id)
-) {$charset_collate};";
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id BIGINT UNSIGNED NOT NULL,
+			role VARCHAR(100) NOT NULL,
+			scope VARCHAR(100) NOT NULL DEFAULT 'global',
+			capabilities LONGTEXT NULL,
+			meta LONGTEXT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY user_id (user_id)
+		) {$charset_collate};";
 
 		// ROLES table.
 		$sql[] = "CREATE TABLE {$roles} (
-        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-        name VARCHAR(100) NOT NULL,
-        slug VARCHAR(100) NOT NULL,
-        description TEXT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        UNIQUE KEY slug (slug)
-    ) {$charset_collate};";
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			name VARCHAR(100) NOT NULL,
+			slug VARCHAR(100) NOT NULL,
+			description TEXT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY slug (slug)
+		) {$charset_collate};";
 
 		// ROLE CAPABILITIES.
 		$sql[] = "CREATE TABLE {$role_cap} (
-        role_id BIGINT UNSIGNED NOT NULL,
-        capability VARCHAR(255) NOT NULL,
-        PRIMARY KEY (role_id, capability),
-        KEY role_id (role_id)
-    ) {$charset_collate};";
+			role_id BIGINT UNSIGNED NOT NULL,
+			capability VARCHAR(255) NOT NULL,
+			PRIMARY KEY (role_id, capability),
+			KEY role_id (role_id)
+		) {$charset_collate};";
 
 		// USER ROLE ASSIGNMENTS.
 		$sql[] = "CREATE TABLE {$user_rl} (
-        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-        user_id BIGINT UNSIGNED NOT NULL,
-        role_id BIGINT UNSIGNED NOT NULL,
-        entity_id BIGINT UNSIGNED NULL,
-        site_id BIGINT UNSIGNED NULL,
-        PRIMARY KEY (id),
-        KEY user_id (user_id),
-        KEY role_id (role_id)
-    ) {$charset_collate};";
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id BIGINT UNSIGNED NOT NULL,
+			role_id BIGINT UNSIGNED NOT NULL,
+			entity_id BIGINT UNSIGNED NULL,
+			site_id BIGINT UNSIGNED NULL,
+			PRIMARY KEY (id),
+			KEY user_id (user_id),
+			KEY role_id (role_id)
+		) {$charset_collate};";
 
 		// SCOPES.
 		$sql[] = "CREATE TABLE {$scopes} (
-        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-        name VARCHAR(100) NOT NULL,
-        slug VARCHAR(100) NOT NULL,
-        type VARCHAR(50) NOT NULL,
-        config LONGTEXT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        UNIQUE KEY slug (slug),
-        KEY type (type)
-    ) {$charset_collate};";
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			name VARCHAR(100) NOT NULL,
+			slug VARCHAR(100) NOT NULL,
+			type VARCHAR(50) NOT NULL,
+			config LONGTEXT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			UNIQUE KEY slug (slug),
+			KEY type (type)
+		) {$charset_collate};";
 
 		// Execute all.
 		foreach ( $sql as $query ) {

@@ -9,17 +9,19 @@ namespace WPAC;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPAC\Core\Activator;
-use WPAC\Core\Deactivator;
-use WPAC\Core\CapabilityRegistry;
-use WPAC\Core\Upgrader;
-use WPAC\Core\RoleRegistry;
-use WPAC\Core\ScopeRegistry;
-use WPAC\Services\AccessManager;
-use WPAC\Services\RoleManager;
-use WPAC\Services\ScopeManager;
 use WPAC\Admin\Menu;
 use WPAC\Ajax\AccessAjax;
+use WPAC\Core\Activator;
+use WPAC\Core\CapabilityRegistry;
+use WPAC\Core\Deactivator;
+use WPAC\Core\Upgrader;
+use WPAC\Services\AccessManager;
+use WPAC\Services\EntityManager;
+use WPAC\Services\RoleManager;
+use WPAC\Services\ScopeManager;
+use WPAC\Services\SiteManager;
+use WPAC\Services\AuthManager;
+use WPAC\Core\Router;
 
 /**
  * Main Plugin Bootstrap Class.
@@ -41,6 +43,32 @@ class Plugin {
 	 * @var AccessManager
 	 */
 	private AccessManager $access_manager;
+
+
+	/**
+	 * Access manager instance.
+	 *
+	 * @var AuthManager
+	 */
+	private AuthManager $auth_manager;
+
+
+
+	/**
+	 * Access manager instance.
+	 *
+	 * @var EntityManager
+	 */
+	private EntityManager $entity_manager;
+
+	/**
+	 * Access manager instance.
+	 *
+	 * @var SiteManager
+	 */
+	private SiteManager $site_manager;
+
+
 
 	/**
 	 * Role manager instance.
@@ -100,47 +128,24 @@ class Plugin {
 	 */
 	private function boot(): void {
 		$this->register_services();
-		do_action( 'wpac_register_capabilities', $this->registry );
-		$this->register_services();
-		$this->register_hooks();
 		$this->register_menu();
-
-		/**
-		 * ROLES
-		 */
-		RoleRegistry::register( 'super_user', 'Super User', array( '*' ) );
-
-		RoleRegistry::register(
-			'manager',
-			'Manager',
-			array(
-				'report:view',
-				'report:create',
-				'barcode:view',
-			)
-		);
-
-		RoleRegistry::register(
-			'analyst',
-			'Analyst',
-			array(
-				'report:view',
-			)
-		);
-
-		RoleRegistry::register( 'client', 'Client', array() );
-
-		/**
-		 * SCOPES
-		 */
-		ScopeRegistry::register( 'global', 'Global Access' );
-		ScopeRegistry::register( 'entity', 'Company Level' );
-		ScopeRegistry::register( 'site', 'Site Level' );
-		AccessAjax::init();
+		$this->register_hooks();
 	}
 
 	/**
+	 * Redirect to dashboard if homepage is accessed.
 	 *
+	 * @return void
+	 */
+	public function homepage_redirect() {
+		if ( ! current_user_can( 'manage_options' ) && ! wp_doing_ajax() ) {
+			wp_safe_redirect( home_url() );
+			exit;
+		}
+	}
+
+	/**
+	 * Register admin menu.
 	 *
 	 * @since 1.0.0
 	 */
@@ -181,6 +186,9 @@ class Plugin {
 	 * @return void
 	 */
 	private function register_services(): void {
+		$this->auth_manager   = new AuthManager();
+		$this->entity_manager = new EntityManager();
+		$this->site_manager   = new SiteManager();
 		$this->role_manager   = new RoleManager();
 		$this->scope_manager  = new ScopeManager();
 		$this->registry       = new CapabilityRegistry();
@@ -197,6 +205,39 @@ class Plugin {
 	 */
 	private function register_hooks(): void {
 		add_action( 'init', array( $this, 'on_init' ) );
+		// Block all non-platform pages.
+		add_action(
+			'template_redirect',
+			function () {
+				$allowed = array(
+					'/wpac-platform',
+					'/wpac-platform/login',
+					'/wpac-platform/logout',
+				);
+
+				$path = '/' . trim( parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ), '/' );
+
+				if ( ! in_array( $path, $allowed ) ) {
+					if ( ! is_user_logged_in() ) {
+						wp_safe_redirect( home_url( '/wpac-platform/login' ) );
+					} else {
+						wp_safe_redirect( home_url( '/wpac-platform' ) );
+					}
+					exit;
+				}
+			}
+		);
+		// Restrict wp-admin for non-admins.
+		add_action(
+			'admin_init',
+			function () {
+				if ( ! current_user_can( 'manage_options' ) ) {
+					wp_safe_redirect( home_url( '/wpac-platform' ) );
+					exit;
+				}
+			}
+		);
+		add_filter( 'show_admin_bar', '__return_false' ); // optional.
 	}
 
 	/**
@@ -205,6 +246,8 @@ class Plugin {
 	 * @return void
 	 */
 	public function on_init(): void {
+		AccessAjax::init();
+		Router::init();
 		do_action( 'wpac_loaded' );
 	}
 
@@ -262,5 +305,27 @@ class Plugin {
 	 */
 	public function scope(): ScopeManager {
 		return $this->scope_manager;
+	}
+
+	/**
+	 * Get Entities.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return EntityManager
+	 */
+	public function entities(): EntityManager {
+		return $this->entity_manager;
+	}
+
+	/**
+	 * Get Site Manager.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return SiteManager
+	 */
+	public function sites(): SiteManager {
+		return $this->site_manager;
 	}
 }
