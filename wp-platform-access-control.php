@@ -92,7 +92,7 @@ add_action(
  * Returns the main instance of WPAC to prevent the need to use globals.
  *
  * @since  1.0.0
- * @return WPAC
+ * @return \WPAC\Plugin
  */
 function wpac() {
 	return Plugin::instance();

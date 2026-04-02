@@ -1,14 +1,34 @@
 <?php
+/**
+ * Entity Manager.
+ *
+ * @package WP_Platform_Access_Control
+ */
+
 namespace WPAC\Services;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+defined( 'ABSPATH' ) || exit;
 
+/**
+ * Handles entity management operations.
+ *
+ * @since 1.0.0
+ */
 class EntityManager {
 
+	/**
+	 * Table Name.
+	 *
+	 * @since 1.0.0
+	 * @var string
+	 */
 	private string $table;
 
+	/**
+	 * Constructor.
+	 *
+	 * @since 1.0.0
+	 */
 	public function __construct() {
 		global $wpdb;
 		$this->table = $wpdb->prefix . 'wpac_entities';
@@ -17,7 +37,7 @@ class EntityManager {
 	/**
 	 * Get all entities.
 	 *
-	 * @param int|null $status Optional status filter (1 = active, 0 = inactive)
+	 * @param int|null $status Optional status filter (1 = active, 0 = inactive).
 	 * @return array
 	 */
 	public function get_all( ?int $status = null ): array {

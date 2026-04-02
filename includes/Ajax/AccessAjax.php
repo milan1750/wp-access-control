@@ -1,11 +1,41 @@
 <?php
+/**
+ * AccessAjax
+ *
+ * @package WPAC
+ * @since 1.0.0
+ */
 
 namespace WPAC\Ajax;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPAC\Models\Role;
+use WPAC\Models\Entity;
+use WPAC\Services\RoleService;
+use WPAC\Repositories\RoleRepository;
+use WPAC\Repositories\UserRoleRepository;
+use WPAC\Repositories\RoleCapabilityRepository;
+use WPAC\Services\EntityService;
+use WPAC\Repositories\EntityRepository;
+use WPAC\Models\Scope;
+use WPAC\Services\ScopeService;
+use WPAC\Repositories\ScopeRepository;
+
+
+/**
+ * AJAX handlers for access control operations
+ *
+ * @since 1.0.0
+ */
 class AccessAjax {
 
+
+	/**
+	 * Init.
+	 *
+	 * @since 1.0.0
+	 */
 	public static function init(): void {
 
 		add_action( 'wp_ajax_wpac_save_access', array( self::class, 'save_access' ) );
@@ -28,6 +58,11 @@ class AccessAjax {
 		add_action( 'wp_ajax_wpac_save_user_caps', array( self::class, 'save_user_caps' ) );
 	}
 
+	/**
+	 * Get Role caps
+	 *
+	 * @since 1.0.0
+	 */
 	public static function get_role_caps() {
 		check_ajax_referer( 'wpac_nonce', 'nonce' );
 
@@ -141,64 +176,30 @@ class AccessAjax {
 		wp_send_json_success( $data );
 	}
 
-	/*
-	=========================================================
-	 * ENTITY
-	 * ========================================================= */
-	/*
-	=========================================================
-	* ENTITY SAVE (CREATE + UPDATE)
-	* ========================================================= */
-	public static function save_entity(): void {
+
+	/**
+	 * Save Entity.
+	 */
+	public static function save_entity() {
 
 		check_ajax_referer( 'wpac_nonce', 'nonce' );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpac_entities';
-
-		// Get POST data
-		$id     = intval( $_POST['id'] ?? 0 ); // 0 means new
+		$id     = intval( $_POST['id'] ?? 0 );
 		$name   = sanitize_text_field( $_POST['name'] ?? '' );
-		$slug   = sanitize_title( $_POST['slug'] ?? '' );
+		$slug   = sanitize_title( $_POST['slug'] ?? $name );
 		$status = isset( $_POST['status'] ) ? intval( $_POST['status'] ) : 1;
 
-		if ( empty( $name ) ) {
+		if ( ! $name ) {
 			self::json_error( 'Entity name required' );
 		}
 
-		$slug = $slug ?: sanitize_title( $name );
+		try {
 
-		// Duplicate check: skip current ID if updating
-		$exists = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table} WHERE slug = %s" . ( $id ? ' AND id != %d' : '' ),
-				$id ? array( $slug, $id ) : array( $slug )
-			)
-		);
-
-		if ( $exists ) {
-			self::json_error( 'Entity with this slug already exists' );
-		}
-
-		if ( $id ) {
-			// UPDATE
-			$updated = $wpdb->update(
-				$table,
-				array(
-					'name'   => $name,
-					'slug'   => $slug,
-					'status' => $status,
-				),
-				array( 'id' => $id ),
-				array( '%s', '%s', '%d' ),
-				array( '%d' )
+			$service = new EntityService(
+				new EntityRepository()
 			);
 
-			if ( $updated === false ) {
-				self::json_error( 'Update failed' );
-			}
-
-			self::json_success(
+			$entity = new Entity(
 				array(
 					'id'     => $id,
 					'name'   => $name,
@@ -206,319 +207,188 @@ class AccessAjax {
 					'status' => $status,
 				)
 			);
-		} else {
-			// INSERT
-			$inserted = $wpdb->insert(
-				$table,
-				array(
-					'name'   => $name,
-					'slug'   => $slug,
-					'status' => $status,
-				),
-				array( '%s', '%s', '%d' )
-			);
 
-			if ( ! $inserted ) {
-				self::json_error( 'Insert failed' );
-			}
+			$entity = $service->create_or_update( $entity );
 
 			self::json_success(
 				array(
-					'id'     => $wpdb->insert_id,
-					'name'   => $name,
-					'slug'   => $slug,
-					'status' => $status,
+					'id'     => $entity->id,
+					'name'   => $entity->name,
+					'slug'   => $entity->slug,
+					'status' => $entity->status,
 				)
 			);
+
+		} catch ( \Exception $e ) {
+
+			self::json_error( $e->getMessage() );
+
 		}
 	}
 
+	/**
+	 * Delete Entity.
+	 *
+	 * @since 1.0.0
+	 */
 	public static function delete_entity(): void {
 
 		check_ajax_referer( 'wpac_nonce', 'nonce' );
 
-		global $wpdb;
-
 		$id = (int) ( $_POST['id'] ?? 0 );
 
 		if ( ! $id ) {
 			self::json_error( 'Invalid ID' );
 		}
 
-		$deleted = $wpdb->delete(
-			$wpdb->prefix . 'wpac_entities',
-			array( 'id' => $id ),
-			array( '%d' )
-		);
-
+		$enity_repo = new EntityRepository();
+		$deleted    = $enity_repo->delete( $id );
 		if ( ! $deleted ) {
 			self::json_error( 'Delete failed' );
 		}
-
 		self::json_success( true );
 	}
 
+	/**
+	 * Save Scope
+	 *
+	 * @since 1.0.0
+	 */
 	public static function save_scope(): void {
+
 		check_ajax_referer( 'wpac_nonce', 'nonce' );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpac_scopes';
+		try {
 
-		$id     = intval( $_POST['id'] ?? 0 );
-		$name   = sanitize_text_field( $_POST['name'] ?? '' );
-		$slug   = sanitize_title( $_POST['slug'] ?? '' );
-		$config = wp_unslash( $_POST['config'] ?? '{}' ); // JSON string
-
-		if ( ! $name ) {
-			self::json_error( 'Scope name required' );
-		}
-
-		$slug = $slug ?: sanitize_title( $name );
-
-		// Check if slug exists for new scope or other scope
-		$exists = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table} WHERE slug = %s" . ( $id ? ' AND id != %d' : '' ),
-				$slug,
-				$id
-			)
-		);
-
-		if ( $exists ) {
-			self::json_error( 'Scope slug already exists' );
-		}
-
-		if ( $id ) {
-			// Update
-			$updated = $wpdb->update(
-				$table,
+			$scope = new Scope(
 				array(
-					'name'   => $name,
-					'slug'   => $slug,
-					'config' => $config,
-				),
-				array( 'id' => $id ),
-				array( '%s', '%s', '%s' ),
-				array( '%d' )
+					'id'     => intval( $_POST['id'] ?? 0 ),
+					'name'   => sanitize_text_field( $_POST['name'] ?? '' ),
+					'slug'   => sanitize_title( $_POST['slug'] ?? '' ),
+					'config' => wp_unslash( $_POST['config'] ?? '{}' ),
+				)
 			);
 
-			if ( $updated === false ) {
-				self::json_error( 'Update failed' );
-			}
-		} else {
-			// Insert
-			$inserted = $wpdb->insert(
-				$table,
-				array(
-					'name'   => $name,
-					'slug'   => $slug,
-					'config' => $config,
-				),
-				array( '%s', '%s', '%s' )
+			$scope_service = new ScopeService(
+				new ScopeRepository()
 			);
 
-			if ( ! $inserted ) {
-				self::json_error( 'Insert failed' );
-			}
-		}
+			$scope_service->save( $scope );
 
-		self::json_success( true );
+			self::json_success( true );
+
+		} catch ( \Exception $e ) {
+
+			self::json_error( $e->getMessage() );
+
+		}
 	}
 
-	/*
-	=========================================================
-	* SCOPE DELETE
-	* =========================================================
-	*/
+	/**
+	 * Delete Scope
+	 *
+	 * @since 1.0.0
+	 */
 	public static function delete_scope(): void {
 
 		check_ajax_referer( 'wpac_nonce', 'nonce' );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'wpac_scopes';
+		try {
 
-		$id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+			$id = intval( $_POST['id'] ?? 0 );
 
-		if ( ! $id ) {
-			self::json_error( 'Invalid ID' );
+			$scope_service = new ScopeService(
+				new ScopeRepository()
+			);
+
+			$scope_service->delete( $id );
+
+			self::json_success( true );
+
+		} catch ( \Exception $e ) {
+
+			self::json_error( $e->getMessage() );
+
 		}
-
-		$deleted = $wpdb->delete(
-			$table,
-			array( 'id' => $id ),
-			array( '%d' )
-		);
-
-		if ( ! $deleted ) {
-			self::json_error( 'Delete failed' );
-		}
-
-		self::json_success( true );
 	}
 
+	/**
+	 * Save Role.
+	 *
+	 * @since 1.0.0
+	 */
 	public static function save_role(): void {
-
-		// Security check
+		// Security check.
 		check_ajax_referer( 'wpac_nonce', 'nonce' );
 
-		global $wpdb;
-		$roles_table    = $wpdb->prefix . 'wpac_roles';
-		$role_cap_table = $wpdb->prefix . 'wpac_role_capabilities';
-
-		$id   = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+		$id   = intval( $_POST['id'] ?? 0 );
 		$name = sanitize_text_field( $_POST['name'] ?? '' );
 		$slug = sanitize_title( $_POST['slug'] ?? $name );
-		$caps = $_POST['capabilities'] ?? array(); // array of capability keys
+		$caps = array_map( 'sanitize_key', $_POST['capabilities'] ?? array() );
 
-		if ( empty( $name ) || empty( $slug ) ) {
+		if ( ! $name || ! $slug ) {
 			self::json_error( 'Role name and slug are required' );
 		}
 
-		// Check for duplicate slug
-		if ( $id ) {
-			$exists = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$roles_table} WHERE slug = %s AND id != %d",
-					$slug,
-					$id
+		$role_repo    = new RoleRepository();
+		$cap_repo     = new RoleCapabilityRepository();
+		$role_service = new RoleService( $role_repo, $cap_repo );
+
+		$role = new Role(
+			array(
+				'id'   => $id,
+				'name' => $name,
+				'slug' => $slug,
+			)
+		);
+
+		try {
+			$role = $role_service->create_or_update( $role, $caps );
+			self::json_success(
+				array(
+					'id'   => $role->id,
+					'name' => $role->name,
+					'slug' => $role->slug,
+					'caps' => $caps,
 				)
 			);
-		} else {
-			$exists = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$roles_table} WHERE slug = %s",
-					$slug
-				)
-			);
-		}
-
-		if ( $exists ) {
-			self::json_error( 'Role with this slug already exists' );
-		}
-
-		// --- Update existing role ---
-		if ( $id ) {
-
-			$updated = $wpdb->update(
-				$roles_table,
-				array(
-					'name' => $name,
-					'slug' => $slug,
-				),
-				array( 'id' => $id ),
-				array( '%s', '%s' ),
-				array( '%d' )
-			);
-
-			if ( $updated === false ) {
-				self::json_error( 'Failed to update role' );
-			}
-
-			// Update capabilities
-			$wpdb->delete( $role_cap_table, array( 'role_id' => $id ), array( '%d' ) );
-
-			if ( ! empty( $caps ) ) {
-				$insert_data = array();
-				foreach ( $caps as $cap ) {
-					$insert_data[] = array(
-						'role_id'    => $id,
-						'capability' => sanitize_key( $cap ),
-					);
-				}
-				foreach ( $insert_data as $row ) {
-					$wpdb->insert( $role_cap_table, $row, array( '%d', '%s' ) );
-				}
-			}
-
-			self::json_success( compact( 'id', 'name', 'slug', 'caps' ) );
-
-		}
-		// --- Insert new role ---
-		else {
-
-			$inserted = $wpdb->insert(
-				$roles_table,
-				array(
-					'name' => $name,
-					'slug' => $slug,
-				),
-				array( '%s', '%s' )
-			);
-
-			if ( ! $inserted ) {
-				self::json_error( 'Failed to insert role' );
-			}
-
-			$role_id = $wpdb->insert_id;
-
-			if ( ! empty( $caps ) ) {
-				$insert_data = array();
-				foreach ( $caps as $cap ) {
-					$insert_data[] = array(
-						'role_id'    => $role_id,
-						'capability' => sanitize_key( $cap ),
-					);
-				}
-				foreach ( $insert_data as $row ) {
-					$wpdb->insert( $role_cap_table, $row, array( '%d', '%s' ) );
-				}
-			}
-
-			self::json_success( compact( 'id', 'name', 'slug', 'caps' ) );
+		} catch ( \Exception $e ) {
+			self::json_error( $e->getMessage() );
 		}
 	}
 
+	/**
+	 * Delete Role.
+	 *
+	 * @since 1.0.0
+	 */
 	public static function delete_role(): void {
 
 		check_ajax_referer( 'wpac_nonce', 'nonce' );
 
-		global $wpdb;
+		$id = intval( $_POST['id'] ?? 0 );
 
-		$id = (int) ( $_POST['id'] ?? 0 );
+		try {
+			$role_repo = new RoleRepository();
+			$cap_repo  = new RoleCapabilityRepository();
+			$user_role = new UserRoleRepository();
 
-		if ( ! $id ) {
-			self::json_error( 'Invalid ID' );
+			$role_service = new RoleService( $role_repo, $cap_repo, $user_role );
+			$role_service->delete( $id );
+
+			self::json_success( true );
+		} catch ( \Exception $e ) {
+			self::json_error( $e->getMessage() );
 		}
-
-		$roles_table     = $wpdb->prefix . 'wpac_roles';
-		$role_cap_table  = $wpdb->prefix . 'wpac_role_capabilities';
-		$user_role_table = $wpdb->prefix . 'wpac_user_roles';
-
-		// Delete the role
-		$deleted = $wpdb->delete(
-			$roles_table,
-			array( 'id' => $id ),
-			array( '%d' )
-		);
-
-		if ( ! $deleted ) {
-			self::json_error( 'Delete failed' );
-		}
-
-		// Delete related role capabilities
-		$wpdb->delete(
-			$role_cap_table,
-			array( 'role_id' => $id ),
-			array( '%d' )
-		);
-
-		// Delete user role assignments
-		$wpdb->delete(
-			$user_role_table,
-			array( 'role_id' => $id ),
-			array( '%d' )
-		);
-
-		self::json_success( true );
 	}
 
 	public static function save_user_caps(): void {
-		// Verify nonce for security
+		// Verify nonce for security.
 		check_ajax_referer( 'wpac_nonce', 'nonce' );
 
 		global $wpdb;
 
-		// Sanitize inputs
+		// Sanitize inputs.
 		$user_id      = isset( $_POST['user_id'] ) ? intval( $_POST['user_id'] ) : 0;
 		$role         = sanitize_text_field( $_POST['role'] ?? '' );
 		$scope        = sanitize_text_field( $_POST['scope'] ?? 'global' );
@@ -539,10 +409,10 @@ class AccessAjax {
 
 		$table = $wpdb->prefix . 'wpac_user_capabilities';
 
-		// Encode capabilities as JSON
+		// Encode capabilities as JSON.
 		$capabilities_json = wp_json_encode( $capabilities );
 
-		// Check if the user already has a record
+		// Check if the user already has a record.
 		$exists = $wpdb->get_var(
 			$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE user_id = %d", $user_id )
 		);

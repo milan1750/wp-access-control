@@ -29,7 +29,7 @@ class Router {
 	// Enqueue assets based on current route
 	public static function maybe_enqueue_assets() {
 		$route = get_query_var( 'wpac' );
-		if ( $route === 'platform' ) {
+		if ( 'platform' === $route ) {
 			wp_enqueue_style(
 				'wpac-platform-css',
 				WPAC_PLUGIN_URL . 'assets/platform.css',
@@ -43,6 +43,13 @@ class Router {
 				array( 'jquery' ),
 				'1.0.0',
 				true
+			);
+		} elseif ( 'login' === $route ) {
+			wp_enqueue_style(
+				'wpac-login-css',
+				WPAC_PLUGIN_URL . 'assets/frontend/login.css',
+				array(),
+				'1.0.0'
 			);
 		}
 	}

@@ -70,6 +70,15 @@ class Menu {
 			'wpac-scopes',
 			array( $this, 'render_scopes_page' )
 		);
+
+		add_submenu_page(
+			'wpac-menu',
+			'Settings',
+			'Settings',
+			'manage_options',
+			'wpac-settings',
+			array( $this, 'render_settings_page' )
+		);
 	}
 
 	public function enqueue_assets( $hook ): void {
@@ -79,6 +88,7 @@ class Menu {
 			'access-control_page_wpac-sites'    => 'sites.js',
 			'access-control_page_wpac-roles'    => 'roles.js',
 			'access-control_page_wpac-scopes'   => 'scopes.js',
+			'access-control_page_wpac-settings' => 'settings.js',
 		);
 
 		if ( isset( $wpac_scripts[ $hook ] ) ) {
@@ -196,8 +206,8 @@ class Menu {
 		);
 
 		$selected_user = isset( $_GET['user_id'] )
-			? (int) $_GET['user_id']
-			: 0;
+		? (int) $_GET['user_id']
+		: 0;
 
 		$role        = '';
 		$scope       = '';
@@ -275,10 +285,27 @@ class Menu {
 
 		global $wpdb;
 
-		$scopes = $wpdb->get_results(
-			"SELECT * FROM {$wpdb->prefix}wpac_scopes"
-		);
+		// Fetch scopes.
+		$scopes = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}wpac_scopes ORDER BY id DESC" );
+
+		// Fetch entities and sites.
+		$entities = $wpdb->get_results( "SELECT id, name FROM {$wpdb->prefix}wpac_entities ORDER BY name ASC" );
+		$sites    = $wpdb->get_results( "SELECT id, name, entity_id FROM {$wpdb->prefix}wpac_sites ORDER BY name ASC" );
+
+		// Organize sites under entities.
+		$entity_sites = array();
+		foreach ( $sites as $s ) {
+			$entity_sites[ $s->entity_id ][] = $s;
+		}
 
 		include WPAC_PLUGIN_DIR . '/includes/Admin/Views/scopes.php';
+	}
+
+	// =================================================
+	// SCOPES PAGE
+	// =================================================
+	public function render_settings_page(): void {
+
+		include WPAC_PLUGIN_DIR . '/includes/Admin/Views/settings.php';
 	}
 }

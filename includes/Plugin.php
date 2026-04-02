@@ -1,6 +1,6 @@
 <?php
 /**
- * Main Plugin File.
+ * Main Plugin Bootstrap Class.
  *
  * @package WP_Platform_Access_Control
  */
@@ -14,6 +14,7 @@ use WPAC\Ajax\AccessAjax;
 use WPAC\Core\Activator;
 use WPAC\Core\CapabilityRegistry;
 use WPAC\Core\Deactivator;
+use WPAC\Core\Microsoft;
 use WPAC\Core\Upgrader;
 use WPAC\Services\AccessManager;
 use WPAC\Services\EntityManager;
@@ -22,11 +23,14 @@ use WPAC\Services\ScopeManager;
 use WPAC\Services\SiteManager;
 use WPAC\Services\AuthManager;
 use WPAC\Core\Router;
+use WPAC\Container;
 
 /**
  * Main Plugin Bootstrap Class.
  *
  * Responsible for initializing services and exposing global access APIs.
+ *
+ * @since 1.0.0
  */
 class Plugin {
 
@@ -34,6 +38,8 @@ class Plugin {
 	 * Singleton instance.
 	 *
 	 * @var Plugin|null
+	 *
+	 * @since 1.0.0
 	 */
 	private static ?Plugin $instance = null;
 
@@ -41,30 +47,38 @@ class Plugin {
 	 * Access manager instance.
 	 *
 	 * @var AccessManager
+	 *
+	 * @since 1.0.0
 	 */
 	private AccessManager $access_manager;
 
 
 	/**
-	 * Access manager instance.
+	 * Auth manager instance.
 	 *
 	 * @var AuthManager
+	 *
+	 * @since 1.0.0
 	 */
 	private AuthManager $auth_manager;
 
 
 
 	/**
-	 * Access manager instance.
+	 * Entity manager instance.
 	 *
 	 * @var EntityManager
+	 *
+	 * @since 1.0.0
 	 */
 	private EntityManager $entity_manager;
 
 	/**
-	 * Access manager instance.
+	 * Site manager instance.
 	 *
 	 * @var SiteManager
+	 *
+	 * @since 1.0.0
 	 */
 	private SiteManager $site_manager;
 
@@ -101,6 +115,57 @@ class Plugin {
 	private Menu $menu;
 
 	/**
+	 * Dependency Injection Container.
+	 *
+	 * @since 1.0.0
+	 * @var Container
+	 */
+	private Container $container;
+
+	/**
+	 * Constructor.
+	 *
+	 * Initializes core services and registers hooks.
+	 */
+	public function __construct() {
+		$this->container = new Container();
+
+		$this->register_repositories();
+
+		$this->register_services();
+
+		// $this->register_controllers();
+		// $this->register_hooks();
+	}
+
+	/**
+	 * Register repositories in the container.
+	 *
+	 * @since 1.0.0
+	 */
+	public function register_repositories(): void {
+		$this->container->set(
+			RoleRepository::class,
+			function () {
+				return new RoleRepository();
+			}
+		);
+	}
+
+	/**
+	 * Register services and inject dependencies.
+	 */
+	private function register_services(): void {
+		$c = $this->container;
+		$c->set(
+			RoleService::class,
+			fn( $c ) => new RoleService(
+				$c->get( RolesRepository::class )
+			)
+		);
+	}
+
+	/**
 	 * Get plugin instance.
 	 *
 	 * @return Plugin
@@ -127,7 +192,7 @@ class Plugin {
 	 * @return void
 	 */
 	private function boot(): void {
-		$this->register_services();
+		$this->register_services1();
 		$this->register_menu();
 		$this->register_hooks();
 	}
@@ -185,17 +250,13 @@ class Plugin {
 	 *
 	 * @return void
 	 */
-	private function register_services(): void {
+	private function register_services1(): void {
 		$this->auth_manager   = new AuthManager();
 		$this->entity_manager = new EntityManager();
 		$this->site_manager   = new SiteManager();
-		$this->role_manager   = new RoleManager();
 		$this->scope_manager  = new ScopeManager();
 		$this->registry       = new CapabilityRegistry();
-		$this->access_manager = new AccessManager(
-			$this->role_manager,
-			$this->scope_manager
-		);
+		$this->access_manager = new AccessManager();
 	}
 
 	/**
@@ -204,7 +265,6 @@ class Plugin {
 	 * @return void
 	 */
 	private function register_hooks(): void {
-		add_action( 'init', array( $this, 'on_init' ) );
 		// Block all non-platform pages.
 		add_action(
 			'template_redirect',
@@ -238,6 +298,22 @@ class Plugin {
 			}
 		);
 		add_filter( 'show_admin_bar', '__return_false' ); // optional.
+		add_filter( 'allowed_redirect_hosts', array( $this, 'allowed_redirect_hosts' ) );
+
+		add_action( 'init', array( $this, 'on_init' ) );
+	}
+
+	/**
+	 * Allowed Redirect Hosts
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param  array $hosts Hosts.
+	 * @return array
+	 */
+	public function allowed_redirect_hosts( $hosts ) {
+		$hosts[] = 'login.microsoftonline.com';
+		return $hosts;
 	}
 
 	/**
@@ -248,7 +324,8 @@ class Plugin {
 	public function on_init(): void {
 		AccessAjax::init();
 		Router::init();
-		do_action( 'wpac_loaded' );
+		Microsoft::init();
+		AuthManager::init();
 	}
 
 	/**
@@ -327,5 +404,16 @@ class Plugin {
 	 */
 	public function sites(): SiteManager {
 		return $this->site_manager;
+	}
+
+	/**
+	 * Get Site Manager.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return AccessManager
+	 */
+	public function permissions(): AccessManager {
+		return $this->access_manager;
 	}
 }

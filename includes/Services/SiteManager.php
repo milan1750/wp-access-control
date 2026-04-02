@@ -1,4 +1,5 @@
 <?php
+
 namespace WPAC\Services;
 
 if ( ! defined( 'ABSPATH' ) ) {

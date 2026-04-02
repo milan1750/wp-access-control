@@ -1,19 +1,4 @@
-<?php
-global $wpdb;
 
-// Fetch scopes
-$scopes = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}wpac_scopes ORDER BY id DESC" );
-
-// Fetch entities and sites
-$entities = $wpdb->get_results( "SELECT id, name FROM {$wpdb->prefix}wpac_entities ORDER BY name ASC" );
-$sites    = $wpdb->get_results( "SELECT id, name, entity_id FROM {$wpdb->prefix}wpac_sites ORDER BY name ASC" );
-
-// Organize sites under entities
-$entity_sites = array();
-foreach ( $sites as $s ) {
-	$entity_sites[ $s->entity_id ][] = $s;
-}
-?>
 
 <div class="wpac-wrap">
 	<div class="wpac-content">

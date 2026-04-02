@@ -1,23 +1,26 @@
 <?php
 /**
- * Entity Repository
+ * Scope Repository
  *
  * @package WPAC
+ * @since 1.0.0
  */
 
 namespace WPAC\Repositories;
 
-use WPAC\Models\Entity;
+use WPAC\Models\Scope;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Entity Repository
+ * Repository for managing scope data access.
+ *
+ * @since 1.0.0 *
  */
-class EntityRepository {
+class ScopeRepository {
 
 	/**
-	 * Table name
+	 * Database table name for scopes.
 	 *
 	 * @var string
 	 */
@@ -28,38 +31,35 @@ class EntityRepository {
 	 */
 	public function __construct() {
 		global $wpdb;
-		$this->table = $wpdb->prefix . 'wpac_entities';
+		$this->table = $wpdb->prefix . 'wpac_scopes';
 	}
 
 	/**
-	 * Get all entities.
+	 * Get all scopes.
 	 *
-	 * @return Entity[]
+	 * @return Scope[]
 	 */
 	public function all(): array {
-
 		global $wpdb;
 
 		$rows = $wpdb->get_results(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			"SELECT * FROM {$this->table} ORDER BY name ASC"
+			"SELECT * FROM {$this->table}"
 		);
 
-		if ( ! $rows ) {
-			return array();
-		}
-
 		return array_map(
-			fn( $row ) => new Entity( (array) $row ),
+			function ( $row ) {
+				return new Scope( (array) $row );
+			},
 			$rows
 		);
 	}
 
 	/**
-	 * Create entity.
+	 * Create a new scope.
 	 *
-	 * @param array $data Entity data.
-	 * @return int
+	 * @param array $data Scope data to insert.
+	 * @return int Inserted scope ID.
 	 */
 	public function create( array $data ): int {
 
@@ -68,18 +68,18 @@ class EntityRepository {
 		$wpdb->insert(
 			$this->table,
 			$data,
-			array( '%s', '%s', '%d' )
+			array( '%s', '%s', '%s' )
 		);
 
 		return (int) $wpdb->insert_id;
 	}
 
 	/**
-	 * Update entity.
+	 * Update an existing scope.
 	 *
-	 * @param int   $id Entity ID.
-	 * @param array $data Entity data.
-	 * @return bool
+	 * @param int   $id   Scope ID to update.
+	 * @param array $data Scope data to update.
+	 * @return bool True on success, false on failure.
 	 */
 	public function update( int $id, array $data ): bool {
 
@@ -89,16 +89,16 @@ class EntityRepository {
 			$this->table,
 			$data,
 			array( 'id' => $id ),
-			array( '%s', '%s', '%d' ),
+			array( '%s', '%s', '%s' ),
 			array( '%d' )
 		);
 	}
 
 	/**
-	 * Delete entity.
+	 * Delete a scope by ID.
 	 *
-	 * @param int $id Entity ID.
-	 * @return bool
+	 * @param int $id Scope ID to delete.
+	 * @return bool True on success, false on failure.
 	 */
 	public function delete( int $id ): bool {
 
@@ -112,12 +112,12 @@ class EntityRepository {
 	}
 
 	/**
-	 * Find by slug.
+	 * Find a scope by slug.
 	 *
-	 * @param string $slug Entity slug.
-	 * @return Entity|null
+	 * @param string $slug Scope slug to search for.
+	 * @return Scope|null Scope object if found, null if not found.
 	 */
-	public function find_by_slug( string $slug ): ?Entity {
+	public function find_by_slug( string $slug ): ?Scope {
 
 		global $wpdb;
 
@@ -129,6 +129,6 @@ class EntityRepository {
 			)
 		);
 
-		return $row ? new Entity( (array) $row ) : null;
+		return $row ? new Scope( (array) $row ) : null;
 	}
 }
