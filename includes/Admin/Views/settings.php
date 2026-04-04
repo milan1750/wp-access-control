@@ -1,5 +1,5 @@
 <?php
-// Save settings
+// Save settings.
 if ( isset( $_POST['wrm_auth_nonce'] ) && wp_verify_nonce( $_POST['wrm_auth_nonce'], 'wrm_auth_save' ) ) {
 
 	$settings = array(
@@ -14,7 +14,7 @@ if ( isset( $_POST['wrm_auth_nonce'] ) && wp_verify_nonce( $_POST['wrm_auth_nonc
 	$notice = 'Settings saved successfully.';
 }
 
-// Load existing settings
+// Load existing settings.
 $settings = get_option( 'wrm_auth_settings', array() );
 
 $tenant_id     = $settings['tenant_id'] ?? '';

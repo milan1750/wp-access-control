@@ -12,15 +12,18 @@ defined( 'ABSPATH' ) || exit;
 
 use WPAC\Models\Role;
 use WPAC\Models\Entity;
+use WPAC\Models\Scope;
+use WPAC\Models\UserCapability;
+use WPAC\Services\EntityService;
+use WPAC\Services\ScopeService;
 use WPAC\Services\RoleService;
+use WPAC\Services\UserCapabilityService;
 use WPAC\Repositories\RoleRepository;
 use WPAC\Repositories\UserRoleRepository;
 use WPAC\Repositories\RoleCapabilityRepository;
-use WPAC\Services\EntityService;
 use WPAC\Repositories\EntityRepository;
-use WPAC\Models\Scope;
-use WPAC\Services\ScopeService;
 use WPAC\Repositories\ScopeRepository;
+use WPAC\Repositories\UserCapabilityRepository;
 
 
 /**
@@ -56,6 +59,7 @@ class AccessAjax {
 
 		add_action( 'wp_ajax_wpac_get_role_caps', array( self::class, 'get_role_caps' ) );
 		add_action( 'wp_ajax_wpac_save_user_caps', array( self::class, 'save_user_caps' ) );
+		add_action( 'wp_ajax_wpac_revoke_user_caps', array( self::class, 'revoke_user_caps' ) );
 	}
 
 	/**
@@ -382,84 +386,158 @@ class AccessAjax {
 		}
 	}
 
+	// public static function save_user_caps(): void {
+	// Verify nonce for security.
+	// check_ajax_referer( 'wpac_nonce', 'nonce' );
+
+	// global $wpdb;
+
+	// Sanitize inputs.
+	// $user_id      = isset( $_POST['user_id'] ) ? intval( $_POST['user_id'] ) : 0;
+	// $role         = sanitize_text_field( $_POST['role'] ?? '' );
+	// $scope        = sanitize_text_field( $_POST['scope'] ?? 'global' );
+	// $capabilities = $_POST['capabilities'] ?? array();
+
+	// if ( is_string( $capabilities ) ) {
+	// $capabilities = stripslashes( $capabilities ); // remove the \ escaping
+	// $capabilities = json_decode( $capabilities, true );
+	// }
+
+	// if ( ! is_array( $capabilities ) ) {
+	// $capabilities = array();
+	// }
+
+	// if ( ! $user_id ) {
+	// self::json_error( 'User is required' );
+	// }
+
+	// $table = $wpdb->prefix . 'wpac_user_capabilities';
+
+	// Encode capabilities as JSON.
+	// $capabilities_json = wp_json_encode( $capabilities );
+
+	// Check if the user already has a record.
+	// $exists = $wpdb->get_var(
+	// $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE user_id = %d", $user_id )
+	// );
+
+	// if ( $exists ) {
+	// $updated = $wpdb->update(
+	// $table,
+	// array(
+	// 'role'         => $role,
+	// 'scope'        => $scope,
+	// 'capabilities' => $capabilities_json,
+	// ),
+	// array( 'user_id' => $user_id ),
+	// array( '%s', '%s', '%s' ),
+	// array( '%d' )
+	// );
+
+	// Only fail if update returned false (query error)
+	// if ( false === $updated ) {
+	// self::json_error( 'Failed to update user capabilities' );
+	// }
+	// } else {
+	// $inserted = $wpdb->insert(
+	// $table,
+	// array(
+	// 'user_id'      => $user_id,
+	// 'role'         => $role,
+	// 'scope'        => $scope,
+	// 'capabilities' => $capabilities_json,
+	// ),
+	// array( '%d', '%s', '%s', '%s' )
+	// );
+
+	// if ( ! $inserted ) {
+	// self::json_error( 'Failed to assign user capabilities' );
+	// }
+	// }
+
+	// Return success response
+	// self::json_success(
+	// array(
+	// 'user_id'      => $user_id,
+	// 'role'         => $role,
+	// 'scope'        => $scope,
+	// 'capabilities' => $capabilities,
+	// )
+	// );
+	// }
+
 	public static function save_user_caps(): void {
-		// Verify nonce for security.
+
 		check_ajax_referer( 'wpac_nonce', 'nonce' );
 
-		global $wpdb;
+		try {
 
-		// Sanitize inputs.
-		$user_id      = isset( $_POST['user_id'] ) ? intval( $_POST['user_id'] ) : 0;
-		$role         = sanitize_text_field( $_POST['role'] ?? '' );
-		$scope        = sanitize_text_field( $_POST['scope'] ?? 'global' );
-		$capabilities = $_POST['capabilities'] ?? array();
+			$capabilities = $_POST['capabilities'] ?? array();
 
-		if ( is_string( $capabilities ) ) {
-			$capabilities = stripslashes( $capabilities ); // remove the \ escaping
-			$capabilities = json_decode( $capabilities, true );
-		}
+			if ( is_string( $capabilities ) ) {
+				$capabilities = json_decode( stripslashes( $capabilities ), true );
+			}
 
-		if ( ! is_array( $capabilities ) ) {
-			$capabilities = array();
-		}
-
-		if ( ! $user_id ) {
-			self::json_error( 'User is required' );
-		}
-
-		$table = $wpdb->prefix . 'wpac_user_capabilities';
-
-		// Encode capabilities as JSON.
-		$capabilities_json = wp_json_encode( $capabilities );
-
-		// Check if the user already has a record.
-		$exists = $wpdb->get_var(
-			$wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE user_id = %d", $user_id )
-		);
-
-		if ( $exists ) {
-			$updated = $wpdb->update(
-				$table,
+			$user_capability = new UserCapability(
 				array(
-					'role'         => $role,
-					'scope'        => $scope,
-					'capabilities' => $capabilities_json,
-				),
-				array( 'user_id' => $user_id ),
-				array( '%s', '%s', '%s' ),
-				array( '%d' )
+					'user_id'      => intval( $_POST['user_id'] ?? 0 ),
+					'role'         => sanitize_text_field( $_POST['role'] ?? '' ),
+					'scope'        => sanitize_text_field( $_POST['scope'] ?? 'global' ),
+					'capabilities' => is_array( $capabilities ) ? $capabilities : array(),
+				)
 			);
 
-			// Only fail if update returned false (query error)
-			if ( false === $updated ) {
-				self::json_error( 'Failed to update user capabilities' );
-			}
-		} else {
-			$inserted = $wpdb->insert(
-				$table,
-				array(
-					'user_id'      => $user_id,
-					'role'         => $role,
-					'scope'        => $scope,
-					'capabilities' => $capabilities_json,
-				),
-				array( '%d', '%s', '%s', '%s' )
+			$user_cap_service = new UserCapabilityService(
+				new UserCapabilityRepository()
 			);
 
-			if ( ! $inserted ) {
-				self::json_error( 'Failed to assign user capabilities' );
-			}
-		}
+			$result = $user_cap_service->save( $user_capability );
 
-		// Return success response
-		self::json_success(
-			array(
-				'user_id'      => $user_id,
-				'role'         => $role,
-				'scope'        => $scope,
-				'capabilities' => $capabilities,
-			)
-		);
+			self::json_success(
+				array(
+					'user_id'      => $result->user_id,
+					'role'         => $result->role,
+					'scope'        => $result->scope,
+					'capabilities' => $result->capabilities,
+				)
+			);
+
+		} catch ( \Exception $e ) {
+
+			self::json_error( $e->getMessage() );
+
+		}
+	}
+
+	public static function revoke_user_caps(): void {
+
+		check_ajax_referer( 'wpac_nonce', 'nonce' );
+
+		try {
+
+			$user_id = intval( $_POST['user_id'] ?? 0 );
+
+			if ( ! $user_id ) {
+				self::json_error( 'Invalid user ID' );
+			}
+
+			$service = new UserCapabilityService(
+				new UserCapabilityRepository()
+			);
+
+			$service->revoke( $user_id );
+
+			self::json_success(
+				array(
+					'user_id' => $user_id,
+				)
+			);
+
+		} catch ( \Exception $e ) {
+
+			self::json_error( $e->getMessage() );
+
+		}
 	}
 
 	/*

@@ -206,7 +206,7 @@ console.log(window.WPAC);
                 if (!result.isConfirmed) return;
 
                 $.post(WPAC.ajax, {
-                    action: "wpac_revoke_user_role",
+                    action: "wpac_revoke_user_caps",
                     nonce: WPAC.nonce,
                     user_id: userId
                 })

@@ -79,14 +79,20 @@ class UserCapability {
 	 * @param array $data UserCapability data, usually from DB row or repository.
 	 */
 	public function __construct( array $data = array() ) {
-		$this->id           = (int) ( $data['id'] ?? 0 );
-		$this->user_id      = (int) ( $data['user_id'] ?? 0 );
-		$this->role         = $data['role'] ?? '';
-		$this->scope        = $data['scope'] ?? 'global';
-		$this->capabilities = isset( $data['capabilities'] ) ? (array) json_decode( $data['capabilities'], true ) : array();
-		$this->meta         = isset( $data['meta'] ) ? (array) json_decode( $data['meta'], true ) : array();
-		$this->created_at   = $data['created_at'] ?? current_time( 'mysql' );
-		$this->updated_at   = $data['updated_at'] ?? null;
+		$this->id         = (int) ( $data['id'] ?? 0 );
+		$this->user_id    = (int) ( $data['user_id'] ?? 0 );
+		$this->role       = $data['role'] ?? '';
+		$this->scope      = $data['scope'] ?? 'global';
+		$this->meta       = isset( $data['meta'] ) ? (array) json_decode( $data['meta'], true ) : array();
+		$this->created_at = $data['created_at'] ?? current_time( 'mysql' );
+		$this->updated_at = $data['updated_at'] ?? null;
+
+		$capabilities = isset( $data['capabilities'] ) ? $data['capabilities'] : array();
+		if ( is_string( $capabilities ) ) {
+			$this->capabilities = (array) json_decode( $capabilities, true );
+		} else {
+			$this->capabilities = $capabilities;
+		}
 	}
 
 	/**
@@ -97,5 +103,14 @@ class UserCapability {
 	 */
 	public function has_capability( string $cap ): bool {
 		return in_array( '*', $this->capabilities ?? array(), true ) || in_array( $cap, $this->capabilities ?? array(), true );
+	}
+
+	public function to_array(): array {
+		return array(
+			'user_id'      => $this->user_id,
+			'role'         => $this->role,
+			'scope'        => $this->scope,
+			'capabilities' => wp_json_encode( $this->capabilities ),
+		);
 	}
 }
