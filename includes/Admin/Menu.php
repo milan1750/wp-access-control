@@ -1,15 +1,23 @@
 <?php
+/**
+ * Menu.
+ *
+ * @package WPAC
+ */
 
 namespace WPAC\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPAC\Core\PermissionRegistry;
-
+/**
+ * Menu Class.
+ *
+ * @since 1.0.0
+ */
 class Menu {
 
 	/**
-	 * Boot admin menu
+	 * Boot admin menu.
 	 */
 	public function init(): void {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
@@ -17,7 +25,7 @@ class Menu {
 	}
 
 	/**
-	 * Register WP Admin Menu
+	 * Register WP Admin Menu.
 	 */
 	public function register_menu(): void {
 
@@ -81,6 +89,13 @@ class Menu {
 		);
 	}
 
+	/**
+	 * Enqueue Assets.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param  mixed $hook Hook.
+	 */
 	public function enqueue_assets( $hook ): void {
 		$wpac_scripts = array(
 			'toplevel_page_wpac-menu'           => 'users.js',
@@ -102,7 +117,7 @@ class Menu {
 				true
 			);
 
-			// Enqueue styles
+			// Enqueue styles.
 			wp_enqueue_style(
 				'wpac-admin',
 				WPAC_PLUGIN_URL . 'assets/admin/admin.css',
@@ -125,28 +140,29 @@ class Menu {
 				true
 			);
 
-			// --- PASS AJAX URL & NONCE ---
 			$data = array(
 				'ajax'  => admin_url( 'admin-ajax.php' ),
 				'nonce' => wp_create_nonce( 'wpac_nonce' ),
 			);
 
-			if ( $hook === 'toplevel_page_wpac-menu' ) {
+			if ( 'toplevel_page_wpac-menu' === $hook ) {
 				global $wpdb;
 
-				// ROLES CAPABILITIES
+				// ROLES CAPABILITIES.
 				$roles_table    = $wpdb->prefix . 'wpac_roles';
 				$role_cap_table = $wpdb->prefix . 'wpac_role_capabilities';
-				$roles          = $wpdb->get_results( "SELECT * FROM {$roles_table} ORDER BY id DESC" );
-				$roles_caps     = array();
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$roles      = $wpdb->get_results( "SELECT * FROM {$roles_table} ORDER BY id DESC" );
+				$roles_caps = array();
 				foreach ( $roles as $role ) {
-					$caps                      = $wpdb->get_col(
+					$caps = $wpdb->get_col(
+						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 						$wpdb->prepare( "SELECT capability FROM {$role_cap_table} WHERE role_id = %d", $role->id )
 					);
 					$roles_caps[ $role->slug ] = $caps;
 				}
 
-				// USER OVERRIDES (capabilities)
+				// USER OVERRIDES (capabilities).
 				$users          = get_users();
 				$user_overrides = array();
 				foreach ( $users as $user ) {
@@ -161,21 +177,20 @@ class Menu {
 					if ( $row ) {
 						$capabilities = $row['capabilities'];
 
-						// If stored as JSON
+						// If stored as JSON.
 						if ( ! empty( $capabilities ) ) {
 							$capabilities = json_decode( $capabilities, true );
 						}
 
-						// Fallback to empty array if decoding failed
+						// Fallback to empty array if decoding failed.
 						if ( ! is_array( $capabilities ) ) {
 							$capabilities = array();
 						}
 
-						error_log( print_r( $capabilities, true ) );
 						$user_overrides[ $user->ID ] = array(
 							'role'         => $row['role'],
 							'scope'        => $row['scope'] ?? 'global',
-							'capabilities' => $capabilities, // flat array from DB
+							'capabilities' => $capabilities, // flat array from DB.
 						);
 					}
 				}
@@ -192,9 +207,11 @@ class Menu {
 		}
 	}
 
-	// =================================================
-	// USERS PAGE (MAIN)
-	// =================================================
+	/**
+	 * Render user page.
+	 *
+	 * @since 1.0.0
+	 */
 	public function render_users_page(): void {
 
 		global $wpdb;
@@ -205,9 +222,8 @@ class Menu {
 			)
 		);
 
-		$selected_user = isset( $_GET['user_id'] )
-		? (int) $_GET['user_id']
-		: 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$selected_user = isset( $_GET['user_id'] ) ? (int) $_GET['user_id'] : 0;
 
 		$role        = '';
 		$scope       = '';
@@ -221,18 +237,18 @@ class Menu {
 			$permissions = get_user_meta( $selected_user, '_wpac_permissions', true );
 
 			if ( ! is_array( $permissions ) ) {
-				$permissions = json_decode( $permissions, true ) ?: array();
+				$permissions = json_decode( $permissions, true ) ? json_decode( $permissions, true ) : array();
 			}
 		}
-
-		$modules = PermissionRegistry::all();
 
 		include WPAC_PLUGIN_DIR . '/includes/Admin/Views/users.php';
 	}
 
-	// =================================================
-	// ROLES PAGE
-	// =================================================
+	/**
+	 * Render Role Page.
+	 *
+	 * @since 1.0.0
+	 */
 	public function render_roles_page(): void {
 
 		global $wpdb;
@@ -241,14 +257,14 @@ class Menu {
 			"SELECT * FROM {$wpdb->prefix}wpac_roles"
 		);
 
-		$modules = PermissionRegistry::all();
-
 		include WPAC_PLUGIN_DIR . '/includes/Admin/Views/roles.php';
 	}
 
-	// =================================================
-	// ENTITIES PAGE
-	// =================================================
+	/**
+	 * Render Entity Page.
+	 *
+	 * @since 1.0.0
+	 */
 	public function render_entities_page(): void {
 
 		global $wpdb;
@@ -260,9 +276,11 @@ class Menu {
 		include WPAC_PLUGIN_DIR . '/includes/Admin/Views/entities.php';
 	}
 
-	// =================================================
-	// SITES PAGE
-	// =================================================
+	/**
+	 * Render Site Page.
+	 *
+	 * @since 1.0.0
+	 */
 	public function render_sites_page(): void {
 
 		global $wpdb;
@@ -278,9 +296,11 @@ class Menu {
 		include WPAC_PLUGIN_DIR . '/includes/Admin/Views/sites.php';
 	}
 
-	// =================================================
-	// SCOPES PAGE
-	// =================================================
+	/**
+	 * Render Scopes Page.
+	 *
+	 * @since 1.0.0
+	 */
 	public function render_scopes_page(): void {
 
 		global $wpdb;
@@ -301,9 +321,11 @@ class Menu {
 		include WPAC_PLUGIN_DIR . '/includes/Admin/Views/scopes.php';
 	}
 
-	// =================================================
-	// SCOPES PAGE
-	// =================================================
+	/**
+	 * Render Settings Page.
+	 *
+	 * @since 1.0.0
+	 */
 	public function render_settings_page(): void {
 
 		include WPAC_PLUGIN_DIR . '/includes/Admin/Views/settings.php';

@@ -1,5 +1,7 @@
 <?php
-
+/**
+ *
+ */
 namespace WPAC\Core;
 
 defined( 'ABSPATH' ) || exit;

@@ -5,7 +5,7 @@
  * @package WP_Platform_Access_Control
  */
 
-namespace WPAC\Services;
+namespace WPAC\Core;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @since 1.0.0
  */
-class AuthManager {
+class Auth {
 
 	/**
 	 * Init.

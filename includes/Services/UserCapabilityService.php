@@ -1,4 +1,9 @@
 <?php
+/**
+ * User Capability Service.
+ *
+ * @package WPAC
+ */
 
 namespace WPAC\Services;
 
@@ -7,14 +12,42 @@ use WPAC\Repositories\UserCapabilityRepository;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * User Capability Service.
+ *
+ * @since 1.0.0
+ */
 class UserCapabilityService {
 
+	/**
+	 * User Capability Repository.
+	 *
+	 * @since 1.0.0
+	 * @var UserCapabilityRepository
+	 */
 	private UserCapabilityRepository $repo;
 
+	/**
+	 * Constructor.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param  UserCapabilityRepository $repo User Capability Repo.
+	 */
 	public function __construct( UserCapabilityRepository $repo ) {
 		$this->repo = $repo;
 	}
 
+	/**
+	 * Save Capability.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param  UserCapability $model User Capibility Model.
+	 *
+	 * @return UserCapability
+	 * @throws \Exception Exception.
+	 */
 	public function save( UserCapability $model ): UserCapability {
 
 		if ( ! $model->user_id ) {
@@ -54,8 +87,8 @@ class UserCapabilityService {
 	/**
 	 * Revoke user capabilities.
 	 *
-	 * @param int $user_id
-	 * @throws \Exception
+	 * @param int $user_id User ID.
+	 * @throws \Exception Exception.
 	 */
 	public function revoke( int $user_id ): void {
 

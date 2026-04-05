@@ -1,32 +1,108 @@
 <?php
+/**
+ * Router.
+ *
+ * @package WPAC
+ */
+
 namespace WPAC\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPAC\Core\AuthMiddleware;
+use WPAC\Middleware\AuthMiddleware;
 
+/**
+ * Router Class.
+ *
+ * @since 1.0.0
+ */
 class Router {
 
-	public static function init() {
+	/**
+	 * Register.
+	 *
+	 * @since 1.0.0
+	 */
+	public static function register() {
 		add_action( 'init', array( self::class, 'register_routes' ) );
+		// Restrict wp-admin for non-admins.
+		add_action( 'admin_init', array( self::class, 'restrict_admin' ) );
+
+		// Block all non-platform pages.
+		add_action( 'template_redirect', array( self::class, 'template_redirect' ) );
+
 		add_filter( 'query_vars', array( self::class, 'query_vars' ) );
 		add_action( 'wp_enqueue_scripts', array( self::class, 'maybe_enqueue_assets' ) );
 		add_action( 'template_redirect', array( self::class, 'handle_routes' ) );
 	}
 
+	/**
+	 * Restrict Admin Pages Access.
+	 *
+	 * @since 1.0.0
+	 */
+	public static function restrict_admin() {
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_safe_redirect( home_url( '/wpac-platform' ) );
+			exit;
+		}
+	}
+
+	/**
+	 * Template Redirect.
+	 *
+	 * @since 1.0.0
+	 */
+	public static function template_redirect() {
+		$allowed = array(
+			'/wpac-platform',
+			'/wpac-platform/login',
+			'/wpac-platform/logout',
+		);
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
+		$path = '/' . trim( parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ), '/' );
+
+		if ( ! in_array( $path, $allowed, true ) ) {
+			if ( ! is_user_logged_in() ) {
+				wp_safe_redirect( home_url( '/wpac-platform/login' ) );
+			} else {
+				wp_safe_redirect( home_url( '/wpac-platform' ) );
+			}
+			exit;
+
+		}
+	}
+
+	/**
+	 * Register Routes.
+	 *
+	 * @since 1.0.0
+	 */
 	public static function register_routes() {
-		error_log( print_r( 'Registering WPAC routes...', true ) );
 		add_rewrite_rule( '^wpac-platform/?$', 'index.php?wpac=platform', 'top' );
 		add_rewrite_rule( '^wpac-platform/login/?$', 'index.php?wpac=login', 'top' );
 		add_rewrite_rule( '^wpac-platform/logout/?$', 'index.php?wpac=logout', 'top' );
 	}
 
+	/**
+	 * Query Vars.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param  array $vars Vars.
+	 */
 	public static function query_vars( $vars ) {
 		$vars[] = 'wpac';
 		return $vars;
 	}
 
-	// Enqueue assets based on current route
+	/**
+	 * Enqueue Scripts.
+	 *
+	 * @since 1.0.0
+	 */
 	public static function maybe_enqueue_assets() {
 		$route = get_query_var( 'wpac' );
 		if ( 'platform' === $route ) {
@@ -54,6 +130,11 @@ class Router {
 		}
 	}
 
+	/**
+	 * Handle Routes.
+	 *
+	 * @since 1.0.0
+	 */
 	public static function handle_routes() {
 		$route      = get_query_var( 'wpac' );
 		$views_path = WPAC_PLUGIN_DIR . '/views/';

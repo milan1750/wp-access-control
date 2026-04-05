@@ -9,21 +9,30 @@ namespace WPAC;
 
 defined( 'ABSPATH' ) || exit;
 
+
+use WPAC\CapabilityRegistry;
 use WPAC\Admin\Menu;
-use WPAC\Ajax\AccessAjax;
-use WPAC\Core\Activator;
-use WPAC\Core\CapabilityRegistry;
-use WPAC\Core\Deactivator;
-use WPAC\Core\Microsoft;
-use WPAC\Core\Upgrader;
-use WPAC\Services\AccessManager;
-use WPAC\Services\EntityManager;
-use WPAC\Services\RoleManager;
-use WPAC\Services\ScopeManager;
-use WPAC\Services\SiteManager;
-use WPAC\Services\AuthManager;
-use WPAC\Core\Router;
+use WPAC\Ajax\Ajax;
 use WPAC\Container;
+use WPAC\Services\RoleService;
+use WPAC\Services\UserCapabilityService;
+use WPAC\Services\EntityService;
+use WPAC\Services\ScopeService;
+use WPAC\Services\SiteService;
+use WPAC\Repositories\RoleRepository;
+use WPAC\Repositories\RoleCapabilityRepository;
+use WPAC\Repositories\UserRoleRepository;
+use WPAC\Repositories\UserCapabilityRepository;
+use WPAC\Repositories\EntityRepository;
+use WPAC\Repositories\ScopeRepository;
+use WPAC\Repositories\SiteRepository;
+use WPAC\Core\Router;
+use WPAC\Core\Activator;
+use WPAC\Core\Deactivator;
+use WPAC\Core\Upgrader;
+use WPAC\Core\Auth;
+use WPAC\Core\Microsoft;
+use WPAC\Services\PermissionService;
 
 /**
  * Main Plugin Bootstrap Class.
@@ -43,15 +52,6 @@ class Plugin {
 	 */
 	private static ?Plugin $instance = null;
 
-	/**
-	 * Access manager instance.
-	 *
-	 * @var AccessManager
-	 *
-	 * @since 1.0.0
-	 */
-	private AccessManager $access_manager;
-
 
 	/**
 	 * Auth manager instance.
@@ -61,7 +61,6 @@ class Plugin {
 	 * @since 1.0.0
 	 */
 	private AuthManager $auth_manager;
-
 
 
 	/**
@@ -129,40 +128,6 @@ class Plugin {
 	 */
 	public function __construct() {
 		$this->container = new Container();
-
-		$this->register_repositories();
-
-		$this->register_services();
-
-		// $this->register_controllers();
-		// $this->register_hooks();
-	}
-
-	/**
-	 * Register repositories in the container.
-	 *
-	 * @since 1.0.0
-	 */
-	public function register_repositories(): void {
-		$this->container->set(
-			RoleRepository::class,
-			function () {
-				return new RoleRepository();
-			}
-		);
-	}
-
-	/**
-	 * Register services and inject dependencies.
-	 */
-	private function register_services(): void {
-		$c = $this->container;
-		$c->set(
-			RoleService::class,
-			fn( $c ) => new RoleService(
-				$c->get( RolesRepository::class )
-			)
-		);
 	}
 
 	/**
@@ -192,10 +157,142 @@ class Plugin {
 	 * @return void
 	 */
 	private function boot(): void {
-		$this->register_services1();
+		$this->register_repositories();
+		$this->register_services();
 		$this->register_menu();
 		$this->register_hooks();
 	}
+
+	/**
+	 * Register repositories in the container.
+	 *
+	 * @since 1.0.0
+	 */
+	private function register_repositories(): void {
+		// Repositories.
+		$this->container->set(
+			RoleRepository::class,
+			function () {
+				return new RoleRepository();
+			}
+		);
+
+		$this->container->set(
+			RoleCapabilityRepository::class,
+			function () {
+				return new RoleCapabilityRepository();
+			}
+		);
+
+		$this->container->set(
+			UserRoleRepository::class,
+			function () {
+				return new UserRoleRepository();
+			}
+		);
+
+		$this->container->set(
+			UserRoleRepository::class,
+			function () {
+				return new UserRoleRepository();
+			}
+		);
+
+		$this->container->set(
+			UserCapabilityRepository::class,
+			function () {
+				return new UserCapabilityRepository();
+			}
+		);
+
+		$this->container->set(
+			EntityRepository::class,
+			function () {
+				return new EntityRepository();
+			}
+		);
+
+		$this->container->set(
+			SiteRepository::class,
+			function () {
+				return new SiteRepository();
+			}
+		);
+
+		$this->container->set(
+			ScopeRepository::class,
+			function () {
+				return new ScopeRepository();
+			}
+		);
+	}
+
+	/**
+	 * Register services in the container.
+	 *
+	 * @since 1.0.0
+	 */
+	public function register_services(): void {
+
+		// Services.
+		$this->container->set(
+			RoleService::class,
+			function () {
+				return new RoleService(
+					wpac()->container()->get( RoleRepository::class ),
+					wpac()->container()->get( RoleCapabilityRepository::class ),
+					wpac()->container()->get( UserRoleRepository::class )
+				);
+			}
+		);
+
+		$this->container->set(
+			EntityService::class,
+			function () {
+				return new EntityService(
+					wpac()->container()->get( EntityRepository::class )
+				);
+			}
+		);
+
+		$this->container->set(
+			ScopeService::class,
+			function () {
+				return new ScopeService(
+					wpac()->container()->get( ScopeRepository::class )
+				);
+			}
+		);
+
+		$this->container->set(
+			SiteService::class,
+			function () {
+				return new \WPAC\Services\SiteService(
+					wpac()->container()->get( SiteRepository::class )
+				);
+			}
+		);
+
+		$this->container->set(
+			PermissionService::class,
+			function () {
+				return new PermissionService(
+					wpac()->container()->get( UserCapabilityRepository::class ),
+					wpac()->container()->get( ScopeRepository::class )
+				);
+			}
+		);
+
+		$this->container->set(
+			UserCapabilityService::class,
+			function () {
+				return new UserCapabilityService(
+					wpac()->container()->get( UserCapabilityRepository::class )
+				);
+			}
+		);
+	}
+
 
 	/**
 	 * Redirect to dashboard if homepage is accessed.
@@ -246,61 +343,18 @@ class Plugin {
 	}
 
 	/**
-	 * Register core services.
-	 *
-	 * @return void
-	 */
-	private function register_services1(): void {
-		$this->auth_manager   = new AuthManager();
-		$this->entity_manager = new EntityManager();
-		$this->site_manager   = new SiteManager();
-		$this->scope_manager  = new ScopeManager();
-		$this->registry       = new CapabilityRegistry();
-		$this->access_manager = new AccessManager();
-	}
-
-	/**
 	 * Register WordPress hooks.
 	 *
 	 * @return void
 	 */
 	private function register_hooks(): void {
-		// Block all non-platform pages.
-		add_action(
-			'template_redirect',
-			function () {
-				$allowed = array(
-					'/wpac-platform',
-					'/wpac-platform/login',
-					'/wpac-platform/logout',
-				);
 
-				$path = '/' . trim( parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ), '/' );
-
-				if ( ! in_array( $path, $allowed ) ) {
-					if ( ! is_user_logged_in() ) {
-						wp_safe_redirect( home_url( '/wpac-platform/login' ) );
-					} else {
-						wp_safe_redirect( home_url( '/wpac-platform' ) );
-					}
-					exit;
-				}
-			}
-		);
-		// Restrict wp-admin for non-admins.
-		add_action(
-			'admin_init',
-			function () {
-				if ( ! current_user_can( 'manage_options' ) ) {
-					wp_safe_redirect( home_url( '/wpac-platform' ) );
-					exit;
-				}
-			}
-		);
 		add_filter( 'show_admin_bar', '__return_false' ); // optional.
 		add_filter( 'allowed_redirect_hosts', array( $this, 'allowed_redirect_hosts' ) );
 
 		add_action( 'init', array( $this, 'on_init' ) );
+		Ajax::register();
+		Router::register();
 	}
 
 	/**
@@ -322,10 +376,8 @@ class Plugin {
 	 * @return void
 	 */
 	public function on_init(): void {
-		AccessAjax::init();
-		Router::init();
+		Auth::init();
 		Microsoft::init();
-		AuthManager::init();
 	}
 
 	/**
@@ -360,60 +412,45 @@ class Plugin {
 	/**
 	 * Get Access Manager.
 	 *
-	 * @return AccessManager
+	 * @return \WPAC\Container
 	 */
-	public function access(): AccessManager {
-		return $this->access_manager;
-	}
-
-	/**
-	 * Get Role Manager.
-	 *
-	 * @return RoleManager
-	 */
-	public function roles(): RoleManager {
-		return $this->role_manager;
-	}
-
-	/**
-	 * Get Scope Manager.
-	 *
-	 * @return ScopeManager
-	 */
-	public function scope(): ScopeManager {
-		return $this->scope_manager;
+	public function container(): Container {
+		return $this->container;
 	}
 
 	/**
 	 * Get Entities.
 	 *
-	 * @since 1.0.0
-	 *
-	 * @return EntityManager
+	 * @return EntityService
 	 */
-	public function entities(): EntityManager {
-		return $this->entity_manager;
+	public function entities() {
+		return $this->container->get( EntityService::class );
 	}
 
 	/**
-	 * Get Site Manager.
+	 * Get Sites.
 	 *
 	 * @since 1.0.0
-	 *
-	 * @return SiteManager
 	 */
-	public function sites(): SiteManager {
-		return $this->site_manager;
+	public function sites() {
+		return $this->container->get( SiteService::class );
 	}
 
 	/**
-	 * Get Site Manager.
+	 * Get Scopes.
 	 *
 	 * @since 1.0.0
-	 *
-	 * @return AccessManager
 	 */
-	public function permissions(): AccessManager {
-		return $this->access_manager;
+	public function scopes() {
+		return $this->container()->get( ScopeService::class );
+	}
+
+	/**
+	 * Get Roles.
+	 *
+	 * @since 1.0.0
+	 */
+	public function permissions() {
+		return $this->container->get( PermissionService::class );
 	}
 }

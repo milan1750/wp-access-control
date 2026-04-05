@@ -26,6 +26,11 @@ class Activator {
 		self::add_capabilities();
 	}
 
+	/**
+	 * Create Tables.
+	 *
+	 * @since 1.0.0
+	 */
 	private static function create_tables(): void {
 		global $wpdb;
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -134,6 +139,7 @@ class Activator {
 			dbDelta( $query );
 		}
 	}
+
 	/**
 	 * Seed super admin access.
 	 */
@@ -156,6 +162,7 @@ class Activator {
 
 			$exists = $wpdb->get_var(
 				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					"SELECT id FROM {$table} WHERE user_id = %d AND role = %s LIMIT 1",
 					$user_id,
 					'super_user'
@@ -188,6 +195,6 @@ class Activator {
 	 * Future capability seeding
 	 */
 	private static function add_capabilities(): void {
-		// reserved for future role/cap system sync
+		// reserved for future role/cap system sync.
 	}
 }

@@ -36,22 +36,13 @@ class EntityRepository {
 	 *
 	 * @return Entity[]
 	 */
-	public function all(): array {
+	public function find_all(): array {
 
 		global $wpdb;
 
-		$rows = $wpdb->get_results(
+		return $wpdb->get_results(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			"SELECT * FROM {$this->table} ORDER BY name ASC"
-		);
-
-		if ( ! $rows ) {
-			return array();
-		}
-
-		return array_map(
-			fn( $row ) => new Entity( (array) $row ),
-			$rows
 		);
 	}
 
@@ -130,5 +121,21 @@ class EntityRepository {
 		);
 
 		return $row ? new Entity( (array) $row ) : null;
+	}
+
+	/**
+	 * Find by ID.
+	 *
+	 * @param int $id Entity ID.
+	 * @return array|null
+	 */
+	public function find_by_id( int $id ): ?array {
+		global $wpdb;
+		$row = $wpdb->get_row(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->prepare( "SELECT * FROM {$this->table} WHERE id=%d LIMIT 1", $id ),
+			ARRAY_A
+		);
+		return $row ? $row : null;
 	}
 }

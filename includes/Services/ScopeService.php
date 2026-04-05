@@ -25,16 +25,16 @@ class ScopeService {
 	 *
 	 * @var ScopeRepository
 	 */
-	private ScopeRepository $scope_repo;
+	private ScopeRepository $repo;
 
 
 	/**
 	 * Constructor.
 	 *
-	 * @param ScopeRepository $scope_repo Repository instance.
+	 * @param ScopeRepository $repo Repository instance.
 	 */
-	public function __construct( ScopeRepository $scope_repo ) {
-		$this->scope_repo = $scope_repo;
+	public function __construct( ScopeRepository $repo ) {
+		$this->repo = $repo;
 	}
 
 	/**
@@ -56,7 +56,7 @@ class ScopeService {
 			$scope->slug = sanitize_title( $scope->name );
 		}
 
-		$existing = $this->scope_repo->find_by_slug( $scope->slug );
+		$existing = $this->repo->find_by_slug( $scope->slug );
 
 		if ( $existing && $existing->id !== $scope->id ) {
 			throw new \Exception( 'Scope slug already exists' );
@@ -64,7 +64,7 @@ class ScopeService {
 
 		if ( $scope->id ) {
 
-			$updated = $this->scope_repo->update(
+			$updated = $this->repo->update(
 				$scope->id,
 				$scope->to_array()
 			);
@@ -74,7 +74,7 @@ class ScopeService {
 			}
 		} else {
 
-			$scope->id = $this->scope_repo->create(
+			$scope->id = $this->repo->create(
 				$scope->to_array()
 			);
 
@@ -102,10 +102,39 @@ class ScopeService {
 			throw new \Exception( 'Invalid ID' );
 		}
 
-		$deleted = $this->scope_repo->delete( $id );
+		$deleted = $this->repo->delete( $id );
 
 		if ( ! $deleted ) {
 			throw new \Exception( 'Delete failed' );
 		}
+	}
+
+	/**
+	 * Get scope configuration by slug
+	 *
+	 * @param string $scope_slug Scope identifier.
+	 * @return array Scope config or empty array.
+	 */
+	public function get_scope_config( string $scope_slug ): array {
+		if ( empty( $scope_slug ) ) {
+			return array();
+		}
+
+		$row = $this->repo->find_by_slug( $scope_slug );
+
+		if ( ! $row || empty( $row->config ) ) {
+			return array();
+		}
+
+		$config = maybe_unserialize( $row->config );
+
+		if ( is_string( $config ) ) {
+			$decoded = json_decode( $config, true );
+			if ( json_last_error() === JSON_ERROR_NONE ) {
+				$config = $decoded;
+			}
+		}
+
+		return is_array( $config ) ? $config : array();
 	}
 }

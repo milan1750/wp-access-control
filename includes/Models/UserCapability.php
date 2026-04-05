@@ -105,6 +105,13 @@ class UserCapability {
 		return in_array( '*', $this->capabilities ?? array(), true ) || in_array( $cap, $this->capabilities ?? array(), true );
 	}
 
+	/**
+	 * To Array.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
 	public function to_array(): array {
 		return array(
 			'user_id'      => $this->user_id,

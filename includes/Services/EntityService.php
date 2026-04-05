@@ -106,4 +106,52 @@ class EntityService {
 			throw new \Exception( 'Delete failed' );
 		}
 	}
+
+	/**
+	 * Get all entities.
+	 *
+	 * @return Entity[]
+	 */
+	public function all(): array {
+		$data_list = $this->repo->find_all();
+
+		$entities = array();
+		foreach ( $data_list as $data ) {
+			$entities[] = new Entity( (array) $data );
+		}
+
+		return $entities;
+	}
+
+	/**
+	 * Get an entity by ID.
+	 *
+	 * @param int $id Entity ID.
+	 * @return Entity|null
+	 * @throws \Exception If retrieval fails.
+	 */
+	public function get( int $id ): ?Entity {
+		$data = $this->repo->find_by_id( $id );
+		return $data ? new Entity( $data ) : null;
+	}
+
+	/**
+	 * Get an entity by slug.
+	 *
+	 * @param string $slug Entity slug.
+	 * @return Entity|null
+	 */
+	public function get_by_slug( string $slug ): ?Entity {
+		$data = $this->repo->find_by_slug( $slug );
+		return $data ? new Entity( $data ) : null;
+	}
+
+	/**
+	 * Get all entities as plain arrays (for JS/localize).
+	 *
+	 * @return array[]
+	 */
+	public function all_array(): array {
+		return array_map( fn( Entity $entity ) => $entity->to_array(), $this->all() );
+	}
 }

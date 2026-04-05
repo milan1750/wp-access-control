@@ -42,7 +42,7 @@ class Microsoft {
 		$client_secret = $settings['client_secret'] ?? '';
 		$redirect_uri  = $settings['redirect_uri'] ?? home_url( '/wpac-microsoft-callback' );
 
-		// Request access token from Microsoft
+		// Request access token from Microsoft.
 		$response = wp_safe_remote_post(
 			"https://login.microsoftonline.com/$tenant/oauth2/v2.0/token",
 			array(
@@ -60,7 +60,7 @@ class Microsoft {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			wp_die( 'Token request failed: ' . $response->get_error_message() );
+			wp_die( 'Token request failed: ' . esc_html( $response->get_error_message() ) );
 		}
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
@@ -69,7 +69,7 @@ class Microsoft {
 			wp_die( 'Token error: access_token missing' );
 		}
 
-		// Get user profile from Microsoft Graph
+		// Get user profile from Microsoft Graph.
 		$user_response = wp_safe_remote_get(
 			'https://graph.microsoft.com/v1.0/me',
 			array(
@@ -80,7 +80,7 @@ class Microsoft {
 		);
 
 		if ( is_wp_error( $user_response ) ) {
-			wp_die( 'Failed to fetch user profile: ' . $user_response->get_error_message() );
+			wp_die( 'Failed to fetch user profile: ' . esc_html( $user_response->get_error_message() ) );
 		}
 
 		$profile = json_decode( wp_remote_retrieve_body( $user_response ), true );

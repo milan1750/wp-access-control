@@ -107,4 +107,23 @@ class Site {
 	public function is_active(): bool {
 		return 1 === $this->status;
 	}
+
+	/**
+	 * To Array.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public function to_array(): array {
+		return array(
+			'id'        => $this->id,
+			'entity_id' => $this->entity_id,
+			'site_id'   => $this->site_id,
+			'name'      => $this->name,
+			'slug'      => $this->slug,
+			'location'  => $this->location,
+			'status'    => $this->status,
+		);
+	}
 }

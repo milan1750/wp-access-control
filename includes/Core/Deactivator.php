@@ -1,4 +1,9 @@
 <?php
+/**
+ * Deactivator.
+ *
+ * @package WPAC
+ */
 
 namespace WPAC\Core;
 
@@ -13,6 +18,6 @@ class Deactivator {
 	 * Run deactivation logic.
 	 */
 	public static function run(): void {
-		// cleanup hooks if needed
+		// cleanup hooks if needed.
 	}
 }
