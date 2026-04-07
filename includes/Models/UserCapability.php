@@ -83,7 +83,7 @@ class UserCapability {
 		$this->user_id    = (int) ( $data['user_id'] ?? 0 );
 		$this->role       = $data['role'] ?? '';
 		$this->scope      = $data['scope'] ?? 'global';
-		$this->meta       = isset( $data['meta'] ) ? (array) json_decode( $data['meta'], true ) : array();
+		$this->meta       = isset( $data['meta'] ) ? $data['meta'] : array();
 		$this->created_at = $data['created_at'] ?? current_time( 'mysql' );
 		$this->updated_at = $data['updated_at'] ?? null;
 

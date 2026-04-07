@@ -13,16 +13,15 @@ use WPAC\Repositories\UserCapabilityRepository;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * User Capability Service.
+ * User Capabiolity Service.
  *
  * @since 1.0.0
  */
 class UserCapabilityService {
 
 	/**
-	 * User Capability Repository.
+	 * Repository.
 	 *
-	 * @since 1.0.0
 	 * @var UserCapabilityRepository
 	 */
 	private UserCapabilityRepository $repo;
@@ -30,22 +29,17 @@ class UserCapabilityService {
 	/**
 	 * Constructor.
 	 *
-	 * @since 1.0.0
-	 *
-	 * @param  UserCapabilityRepository $repo User Capability Repo.
+	 * @param UserCapabilityRepository $repo User Capability Repository.
 	 */
 	public function __construct( UserCapabilityRepository $repo ) {
 		$this->repo = $repo;
 	}
 
 	/**
-	 * Save Capability.
+	 * Save user capability record.
 	 *
-	 * @since 1.0.0
+	 * @param UserCapability $model Model.
 	 *
-	 * @param  UserCapability $model User Capibility Model.
-	 *
-	 * @return UserCapability
 	 * @throws \Exception Exception.
 	 */
 	public function save( UserCapability $model ): UserCapability {
@@ -85,7 +79,8 @@ class UserCapabilityService {
 	/**
 	 * Revoke user capabilities.
 	 *
-	 * @param int $user_id User ID.
+	 * @param int $user_id User id.
+	 *
 	 * @throws \Exception Exception.
 	 */
 	public function revoke( int $user_id ): void {
@@ -99,5 +94,78 @@ class UserCapabilityService {
 		if ( ! $deleted ) {
 			throw new \Exception( 'Failed to revoke user capabilities' );
 		}
+	}
+
+	/**
+	 * Get user capability model.
+	 *
+	 * @param int $user_id User Id.
+	 */
+	public function get( int $user_id ): ?UserCapability {
+
+		$data = $this->repo->find_by_user( $user_id );
+
+		if ( ! $data ) {
+			return null;
+		}
+
+		return new UserCapability( (array) $data );
+	}
+
+	/**
+	 * Get user capabilities as array.
+	 *
+	 * @param int $user_id User id.
+	 */
+	public function get_user_capabilities( int $user_id ): array {
+
+		$model = $this->get( $user_id );
+
+		if ( ! $model ) {
+			return array();
+		}
+
+		return $model->capabilities ?? array();
+	}
+
+	/**
+	 * Get user role.
+	 *
+	 * @param int $user_id User id.
+	 */
+	public function get_role( int $user_id ): ?string {
+
+		$model = $this->get( $user_id );
+
+		return $model ? $model->role : null;
+	}
+
+	/**
+	 * Get scope slug.
+	 *
+	 * @param int $user_id User id.
+	 */
+	public function get_scope( int $user_id ): ?string {
+
+		$model = $this->get( $user_id );
+
+		return $model ? $model->scope : null;
+	}
+
+	/**
+	 * Check if user has capability.
+	 *
+	 * @param int    $user_id User id.
+	 * @param string $capability User Caps.
+	 */
+	public function has_capability( int $user_id, string $capability ): bool {
+
+		$caps = $this->get_user_capabilities( $user_id );
+
+		if ( empty( $caps ) ) {
+			return false;
+		}
+
+		return in_array( $capability, $caps, true );
 	}
 }

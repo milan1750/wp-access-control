@@ -42,7 +42,6 @@ class RolesPage {
 
 		// Fetch all capabilities via filter.
 		$all_caps = apply_filters( 'wpac_get_capabilities', array() );
-
 		// Organize capabilities by module.
 		$modules = array();
 		foreach ( $all_caps as $key => $cap ) {

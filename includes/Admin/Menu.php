@@ -13,6 +13,7 @@ use WPAC\Admin\EntitiesPage;
 use WPAC\Admin\SitesPage;
 use WPAC\Admin\ScopesPage;
 use WPAC\Admin\RolesPage;
+use WPAC\Admin\UsersPage;
 
 /**
  * Menu Class.
@@ -39,7 +40,7 @@ class Menu {
 			'Access Control',
 			'manage_options',
 			'wpac-menu',
-			array( $this, 'render_users_page' ),
+			array( UsersPage::class, 'render' ),
 			'dashicons-lock',
 			26
 		);
