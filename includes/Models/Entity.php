@@ -66,8 +66,6 @@ class Entity {
 	 * @param array $data Entity data, usually from DB row or repository.
 	 */
 	public function __construct( array $data = array() ) {
-				error_log( print_r( $data, true ) );
-
 		$this->id         = (int) ( $data['id'] ?? 0 );
 		$this->name       = $data['name'] ?? '';
 		$this->slug       = $data['slug'] ?? '';
@@ -92,10 +90,10 @@ class Entity {
 	 */
 	public function to_array(): array {
 		return array(
-			'id'     => $this->id,
 			'name'   => $this->name,
 			'slug'   => $this->slug,
 			'status' => $this->status,
+			'id'     => $this->id,
 		);
 	}
 }

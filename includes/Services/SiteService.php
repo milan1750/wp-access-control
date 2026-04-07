@@ -163,4 +163,28 @@ class SiteService {
 	public function all_array(): array {
 		return array_map( fn( Site $site ) => $site->to_array(), $this->all() );
 	}
+
+	/**
+	 * Get sites grouped by entity_id.
+	 *
+	 * @return array
+	 */
+	public function get_sites_grouped(): array {
+		$sites   = $this->repo->find_all(); // returns array of site arrays.
+		$grouped = array();
+
+		foreach ( $sites as $site ) {
+			// Ensure site is an array.
+			$entity_id = isset( $site['entity_id'] ) ? $site['entity_id'] : 0;
+
+			if ( ! isset( $grouped[ $entity_id ] ) ) {
+				$grouped[ $entity_id ] = array();
+			}
+
+			// Directly push site array, not wrapped in another array.
+			$grouped[ $entity_id ][] = new Site( (array) $site );
+		}
+
+		return $grouped;
+	}
 }

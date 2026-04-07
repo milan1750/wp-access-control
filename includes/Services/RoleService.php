@@ -25,7 +25,7 @@ class RoleService {
 	 *
 	 * @var RoleRepository
 	 */
-	private RoleRepository $role_repo;
+	private RoleRepository $repo;
 
 	/**
 	 * Repository for role capability data access.
@@ -37,12 +37,12 @@ class RoleService {
 	/**
 	 * Constructor.
 	 *
-	 * @param RoleRepository           $role_repo Role repository instance.
+	 * @param RoleRepository           $repo Role repository instance.
 	 * @param RoleCapabilityRepository $cap_repo Role capability repository instance.
 	 */
-	public function __construct( RoleRepository $role_repo, RoleCapabilityRepository $cap_repo ) {
-		$this->role_repo = $role_repo;
-		$this->cap_repo  = $cap_repo;
+	public function __construct( RoleRepository $repo, RoleCapabilityRepository $cap_repo ) {
+		$this->repo     = $repo;
+		$this->cap_repo = $cap_repo;
 	}
 
 
@@ -56,17 +56,17 @@ class RoleService {
 	 */
 	public function create_or_update( Role $role, array $capabilities = array() ): Role {
 		// Check unique slug.
-		$existing = $this->role_repo->find_by_slug( $role->slug );
+		$existing = $this->repo->find_by_slug( $role->slug );
 		if ( $existing && $existing->id !== $role->id ) {
 			throw new \Exception( 'Role with this slug already exists' );
 		}
 
 		if ( $role->id ) {
 			// Update.
-			$this->role_repo->update( $role->id, $role->to_array() );
+			$this->repo->update( $role->id, $role->to_array() );
 		} else {
 			// Insert.
-			$role->id = $this->role_repo->create( $role->to_array() );
+			$role->id = $this->repo->create( $role->to_array() );
 		}
 
 		// Update capabilities.
@@ -87,12 +87,40 @@ class RoleService {
 		}
 
 		// Delete the role itself.
-		$deleted = $this->role_repo->delete( $role_id );
+		$deleted = $this->repo->delete( $role_id );
 		if ( ! $deleted ) {
 			throw new \Exception( 'Failed to delete role' );
 		}
 
 		// Delete related role capabilities.
 		$this->cap_repo->delete_by_role( $role_id );
+	}
+
+	/**
+	 * Get all entities.
+	 *
+	 * @return Role[]
+	 */
+	public function all(): array {
+		$data_list = $this->repo->find_all();
+
+		$roles = array();
+		foreach ( $data_list as $data ) {
+			$roles[] = new Role( (array) $data );
+		}
+
+		return $roles;
+	}
+
+	/**
+	 * Get all entities.
+	 *
+	 * @param  int $roll_id Roll Id.
+	 *
+	 * @return array Rolls Caps Array.
+	 */
+	public function role_capabilities( $roll_id ): array {
+		$data_list = $this->cap_repo->get_role_capabilities( $roll_id );
+		return $data_list;
 	}
 }

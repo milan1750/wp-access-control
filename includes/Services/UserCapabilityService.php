@@ -58,8 +58,6 @@ class UserCapabilityService {
 
 		if ( $existing ) {
 
-			error_log( print_r( $model, true ) );
-
 			$updated = $this->repo->update(
 				$model->user_id,
 				$model->to_array()

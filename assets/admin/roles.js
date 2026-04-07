@@ -96,32 +96,43 @@ window.WPAC = window.WPAC || {};
     });
   }
 
-  function bindRoleEdit() {
-    $(document).on("click", ".wpac-edit-role", function () {
-      let item = $(this).closest(".wpac-item");
-      let id = item.data("id"),
+ function bindRoleEdit() {
+  $(document).on("click", ".wpac-edit-role", function () {
+    let item = $(this).closest(".wpac-item");
+    let id = item.data("id"),
         name = item.data("name"),
-        slug = item.data("slug"),
-        caps = item.data("caps") || [];
+        slug = item.data("slug");
 
-      $("#wpac-role-id").val(id);
-      $("#wpac-role-name").val(name);
-      $("#wpac-role-slug").val(slug);
-      $(".wpac-capability-checkbox, .wpac-module-checkbox").prop(
-        "checked",
-        false,
-      );
+    // Safely parse caps, default to empty array
+    let caps = [];
+	console.log(item.data("caps"));
 
-      caps.forEach((c) => {
-        $(".wpac-capability-checkbox[value='" + c + "']")
-          .prop("checked", true)
-          .trigger("change");
-      });
+	try {
+	caps = item.data("caps") || [];
+	if (!Array.isArray(caps)) caps = [];
+	} catch (e) {
+	caps = [];
+	console.warn("Invalid caps data for role ID:", id, e);
+	}
 
-      $("#wpac-save-role").text("Update Role");
-      $("#wpac-cancel-role").show();
+    $("#wpac-role-id").val(id);
+    $("#wpac-role-name").val(name);
+    $("#wpac-role-slug").val(slug);
+
+    // Reset all checkboxes
+    $(".wpac-capability-checkbox, .wpac-module-checkbox").prop("checked", false);
+
+    // Check assigned capabilities
+    caps.forEach((c) => {
+      $(".wpac-capability-checkbox[value='" + c + "']")
+        .prop("checked", true)
+        .trigger("change");
     });
-  }
+
+    $("#wpac-save-role").text("Update Role");
+    $("#wpac-cancel-role").show();
+  });
+}
 
   function bindRoleCancel() {
     $(document).on("click", "#wpac-cancel-role", function () {

@@ -137,4 +137,20 @@ class ScopeService {
 
 		return is_array( $config ) ? $config : array();
 	}
+
+	/**
+	 * Get all entities.
+	 *
+	 * @return Scope[]
+	 */
+	public function all(): array {
+		$data_list = $this->repo->find_all();
+
+		$scopes = array();
+		foreach ( $data_list as $data ) {
+			$scopes[] = new Scope( (array) $data );
+		}
+
+		return $scopes;
+	}
 }

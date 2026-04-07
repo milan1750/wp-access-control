@@ -9,6 +9,11 @@ namespace WPAC\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
+use WPAC\Admin\EntitiesPage;
+use WPAC\Admin\SitesPage;
+use WPAC\Admin\ScopesPage;
+use WPAC\Admin\RolesPage;
+
 /**
  * Menu Class.
  *
@@ -46,17 +51,18 @@ class Menu {
 			'Roles',
 			'manage_options',
 			'wpac-roles',
-			array( $this, 'render_roles_page' )
+			array( RolesPage::class, 'render' )
 		);
 
 		// ================= ENTITIES =================
+
 		add_submenu_page(
 			'wpac-menu',
 			'Entities',
 			'Entities',
 			'manage_options',
 			'wpac-entities',
-			array( $this, 'render_entities_page' )
+			array( EntitiesPage::class, 'render' )
 		);
 
 		// ================= SITES =================
@@ -66,7 +72,7 @@ class Menu {
 			'Sites',
 			'manage_options',
 			'wpac-sites',
-			array( $this, 'render_sites_page' )
+			array( SitesPage::class, 'render' )
 		);
 
 		// ================= SCOPES =================
@@ -76,7 +82,7 @@ class Menu {
 			'Scopes',
 			'manage_options',
 			'wpac-scopes',
-			array( $this, 'render_scopes_page' )
+			array( ScopesPage::class, 'render' )
 		);
 
 		add_submenu_page(

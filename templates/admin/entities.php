@@ -1,9 +1,12 @@
 <?php
-global $wpdb;
-
-// Fetch entities
-$table    = $wpdb->prefix . 'wpac_entities';
-$entities = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY id DESC" );
+/**
+ * Entities Admin Template.
+ *
+ * Variables available:
+ *   - $entities
+ *
+ * @package WPAC
+ */
 ?>
 
 <div class="wpac-wrap">
@@ -15,51 +18,40 @@ $entities = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY id DESC" );
 				<p class="wpac-subtitle">Manage system entities</p>
 			</div>
 
+			<?php wp_nonce_field( 'wpac_entity_action', 'wpac_entity_nonce' ); ?>
+
 			<div class="wpac-message" id="wpac-entity-message"></div>
 
 			<div class="wpac-form-grid">
-
-				<!-- HIDDEN FIELD FOR EDIT -->
 				<input type="hidden" id="wpac-entity-id">
 
-				<!-- ENTITY NAME -->
 				<div class="wpac-field">
-					<label>Entity Name</label>
-					<input type="text" id="wpac-entity-name" placeholder="Enter entity name">
+					<label for="wpac-entity-name">Entity Name</label>
+					<input type="text" id="wpac-entity-name" placeholder="Enter entity name" autocomplete="off">
 				</div>
 
-				<!-- ENTITY SLUG -->
 				<div class="wpac-field">
-					<label>Entity Slug</label>
-					<input type="text" id="wpac-entity-slug" placeholder="Auto generated slug">
+					<label for="wpac-entity-slug">Entity Slug</label>
+					<input type="text" id="wpac-entity-slug" placeholder="Auto generated slug" autocomplete="off">
 				</div>
 
-				<!-- ENTITY STATUS -->
 				<div class="wpac-field">
-					<label>Status</label>
+					<label for="wpac-entity-status">Status</label>
 					<select id="wpac-entity-status">
 						<option value="1">Active</option>
 						<option value="0">Inactive</option>
 					</select>
 				</div>
 
-				<!-- ACTION BUTTONS -->
 				<div class="wpac-actions">
-					<button id="wpac-save-entity" class="button wpac-btn wpac-btn-primary">
-						Add Entity
-					</button>
-					<button id="wpac-cancel-entity" class="button wpac-btn wpac-btn-secondary" style="display:none;">
-						Cancel
-					</button>
+					<button type="button" id="wpac-save-entity" class="button wpac-btn wpac-btn-primary">Add Entity</button>
+					<button type="button" id="wpac-cancel-entity" class="button wpac-btn wpac-btn-secondary" style="display:none;">Cancel</button>
 				</div>
-
 			</div>
 
 			<hr class="wpac-divider">
 
-			<!-- ENTITY LIST -->
 			<ul id="wpac-entity-list" class="wpac-list">
-
 				<?php if ( ! empty( $entities ) ) : ?>
 					<?php foreach ( $entities as $e ) : ?>
 						<li class="wpac-item"
@@ -74,16 +66,14 @@ $entities = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY id DESC" );
 							</div>
 
 							<div class="wpac-item-actions">
-								<button class="wpac-edit-entity button">Edit</button>
-								<button class="wpac-delete-entity button">Delete</button>
+								<button type="button" class="button wpac-edit-entity">Edit</button>
+								<button type="button" class="button wpac-delete-entity">Delete</button>
 							</div>
-
 						</li>
 					<?php endforeach; ?>
 				<?php else : ?>
 					<li class="wpac-empty">No entities found</li>
 				<?php endif; ?>
-
 			</ul>
 
 		</div>

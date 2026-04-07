@@ -90,7 +90,7 @@ class RoleRepository {
 	 * @param int $offset The offset for pagination.
 	 * @return array An array of role objects.
 	 */
-	public function all( int $limit = 0, int $offset = 0 ): array {
+	public function find_all( int $limit = 0, int $offset = 0 ): array {
 		global $wpdb;
 
 		$sql = "SELECT * FROM {$this->table}";

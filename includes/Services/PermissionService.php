@@ -86,8 +86,6 @@ class PermissionService {
 			return true;
 		}
 
-		error_log( print_r( $user_caps, true ) );
-
 		$scope_slug = $user_caps->scope;
 
 		return $this->check_scope( $user_caps->capabilities, $permission, $scope_slug, $context['entity_id'] ?? null, $context['site_id'] ?? null );

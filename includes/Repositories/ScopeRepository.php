@@ -39,7 +39,7 @@ class ScopeRepository {
 	 *
 	 * @return Scope[]
 	 */
-	public function all(): array {
+	public function find_all(): array {
 		global $wpdb;
 
 		$rows = $wpdb->get_results(

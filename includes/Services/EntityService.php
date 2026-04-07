@@ -64,7 +64,6 @@ class EntityService {
 		}
 
 		if ( $entity->id ) {
-
 			$result = $this->repo->update(
 				$entity->id,
 				$entity->to_array()
