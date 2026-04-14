@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WP Platform Access Control
  * Description: Entity / Site / User based access control system for WordPress platform.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Milan Malla
  * License: GPL-2.0-or-later
  *
@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Plugin constants.
  */
-define( 'WPAC_VERSION', '1.0.0' );
+define( 'WPAC_VERSION', '1.0.1' );
 define( 'WPAC_PLUGIN_FILE', __FILE__ );
 define( 'WPAC_PLUGIN_DIR', __DIR__ );
 define( 'WPAC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
