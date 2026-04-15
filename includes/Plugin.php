@@ -351,6 +351,9 @@ class Plugin {
 
 		add_filter( 'show_admin_bar', '__return_false' ); // optional.
 		add_filter( 'allowed_redirect_hosts', array( $this, 'allowed_redirect_hosts' ) );
+		add_action('wp_head', function () {
+			echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
+		});
 
 		add_action( 'init', array( $this, 'on_init' ) );
 		Ajax::register();
