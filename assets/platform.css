@@ -1,11 +1,9 @@
-/* ================= BASE ================= */
 body {
   margin: 0;
   font-family: Inter, Arial, sans-serif;
   background: #f4f6fb;
 }
 
-/* ================= HEADER ================= */
 header {
   height: 60px;
   background: linear-gradient(90deg, #023e8a, #0077b6, #0f2143);
@@ -31,7 +29,6 @@ header {
   cursor: pointer;
 }
 
-/* ================= USER MENU ================= */
 .user-menu {
   position: relative;
 }
@@ -69,13 +66,11 @@ header {
   display: block;
 }
 
-/* ================= LAYOUT ================= */
 .platform-layout {
   display: flex;
   height: calc(100vh - 60px);
 }
 
-/* ================= SIDEBAR ================= */
 #platform-sidebar {
   width: 240px;
   background: #ffffff;
@@ -87,24 +82,20 @@ header {
   flex-direction: column;
 }
 
-/* COLLAPSED SIDEBAR */
 #platform-sidebar.collapsed {
   width: 70px;
 }
 
-/* SIDEBAR TITLE */
 .sidebar-title {
   font-size: 13px;
   color: #888;
   font-weight: 600;
   margin-bottom: 12px;
   padding-left: 10px;
-  border-bottom: 1px solid #e4e4e4; /* separation line */
+  border-bottom: 1px solid #e4e4e4;
   padding-bottom: 8px;
-  transition: opacity 0.3s ease;
 }
 
-/* APP LIST */
 .sidebar-app-list {
   display: flex;
   flex-direction: column;
@@ -112,49 +103,78 @@ header {
   margin-top: 10px;
 }
 
-/* APP CARD */
 .app-card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   text-decoration: none;
   color: #333;
   transition: all 0.2s ease;
-  border-left: 3px solid transparent;
   white-space: nowrap;
   overflow: hidden;
 }
 
-/* IMAGE */
 .app-card img {
   width: 28px;
   height: 28px;
   object-fit: contain;
   flex-shrink: 0;
+  transition: transform 0.2s ease;
 }
 
-/* APP NAME */
-.app-card div {
+.app-card span {
   flex: 1;
-  transition: opacity 0.3s ease;
 }
 
-/* HOVER EFFECT */
 .app-card:hover {
-  background: #f0f5ff;
-  border-left: 3px solid #3b82f6;
+  background: #f8fbff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.08);
 }
 
-/* ACTIVE APP */
+.app-card:hover img {
+  transform: scale(1.08);
+}
+
+.app-card:hover::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #3b82f6, #60a5fa);
+}
+
 .app-card.active {
-  background: #e9f1ff;
-  border-left: 3px solid #2563eb;
+  background: #eaf2ff;
   font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
 }
 
-/* MAIN CONTENT */
+.app-card.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  border-radius: 8px;
+  background: #2563eb;
+}
+
+#platform-sidebar.collapsed .app-card span {
+  display: none;
+}
+
+#platform-sidebar.collapsed .sidebar-title {
+  display: none;
+}
+
 #app-body {
   flex: 1;
   padding: 30px;
@@ -162,7 +182,119 @@ header {
   background: #f4f6fb;
 }
 
-/* Hide app names inside app cards when sidebar is collapsed */
-#platform-sidebar.collapsed .app-card span {
-  display: none;
+@media (max-width: 900px) {
+  .platform-layout {
+    flex-direction: column;
+  }
+
+  body {
+    margin: 0;
+    overflow-x: hidden;
+  }
+
+  #platform-sidebar {
+    position: sticky;
+    top: 0;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+
+    height: 60px;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    padding: 6px 20px;
+
+    box-sizing: border-box;
+
+    background: #ffffff;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    gap: 12px;
+
+    white-space: nowrap;
+
+    flex-shrink: 0;
+
+    z-index: 1000;
+
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sidebar-title {
+    display: none;
+  }
+
+  .sidebar-app-list {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  .app-card {
+    flex: 0 0 auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 8px 14px;
+
+    border-radius: 12px;
+
+    background: #f8fafc;
+
+    transition: all 0.2s ease;
+  }
+
+  .app-card:hover {
+    background: #eef6ff;
+  }
+
+  .app-card.active {
+    background: #e0f2fe;
+  }
+
+  .app-card img {
+    width: 18px;
+    height: 18px;
+  }
+
+  .app-card span {
+    display: none !important;
+  }
+
+  #app-body {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  #platform-sidebar {
+    height: 52px;
+    padding: 6px 14px;
+  }
+
+  .app-card {
+    padding: 6px 10px;
+  }
+
+  .app-card img {
+    width: 16px;
+    height: 16px;
+  }
+
+  #app-body {
+    padding: 12px;
+  }
 }
